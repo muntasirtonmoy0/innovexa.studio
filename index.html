@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Innovexa Studio | Digital Solutions & Discord Engineering</title>
+  <title>Innovexa Studio | Login & Registration</title>
   <link rel="stylesheet" href="style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,158 +13,102 @@
   <canvas id="bg-canvas"></canvas>
   <div class="ambient-glow"></div>
 
-  <!-- Navigation -->
   <nav class="navbar">
     <a href="index.html" class="nav-brand">
       <span class="brand-dot"></span>Innovexa Studio
     </a>
     <ul class="nav-links">
-      <li><a href="index.html" class="active">Home</a></li>
+      <li><a href="index.html">Home</a></li>
       <li><a href="web_service.html">Websites</a></li>
       <li><a href="discord_service.html">Discord Bots</a></li>
       <li><a href="reviews.html">Reviews</a></li>
-      <li class="auth-nav-slot"><button class="btn-nav">Sign In</button></li>
+      <li><a href="login.html" class="active btn-nav">Sign In</a></li>
     </ul>
   </nav>
 
-  <main>
-    <!-- Hero Section -->
-    <section class="hero reveal">
-      <div class="badge">Next-Gen Digital Craftsmanship</div>
-      <h1>We Build Scalable <span class="gradient-text">Websites & Custom Discord Bots</span></h1>
-      <p>Transforming complex technical ideas into responsive, ultra-fast online platforms and feature-packed server automation tools.</p>
-      <div class="hero-actions">
-        <a href="web_service.html" class="btn btn-primary">Explore Web Services</a>
-        <a href="discord_service.html" class="btn btn-secondary">Explore Discord Bots</a>
-      </div>
-    </section>
+  <main style="display: flex; align-items: center; justify-content: center; min-height: 85vh;">
+    <div class="form-box reveal active" style="width: 100%; margin-top: 1rem;">
+      <h2 id="auth-title" style="font-size: 1.7rem; font-weight: 700; margin-bottom: 0.4rem; text-align: center;">Welcome Back</h2>
+      <p id="auth-subtitle" style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.5rem; text-align: center;">
+        Sign in to your account to submit and manage reviews.
+      </p>
 
-    <!-- Services Overview -->
-    <section class="container reveal">
-      <div class="section-title">
-        <h2>What We Do</h2>
-        <p>End-to-end web architecture, platform refreshes, and community infrastructure.</p>
-      </div>
-      <div class="grid">
-        <div class="card">
-          <div class="card-icon">⚡</div>
-          <h3>Full-Stack Web Dev</h3>
-          <p>Bespoke frontend interfaces and complete website development tailored for conversion and lightning speeds.</p>
-          <ul class="card-features">
-            <li>Modern interactive layouts & UI</li>
-            <li>Zero bloat, performance-focused code</li>
-            <li>Mobile and search-optimized architectures</li>
-          </ul>
-          <a href="web_service.html" class="btn btn-secondary" style="width: 100%;">View Packages</a>
+      <div id="status-message" style="display: none; padding: 0.8rem; border-radius: 8px; font-size: 0.85rem; margin-bottom: 1.25rem;"></div>
+
+      <form id="auth-form">
+        <div class="form-group" id="name-group" style="display: none;">
+          <label for="user-name">Your Full Name</label>
+          <input type="text" id="user-name" class="form-input" placeholder="e.g. Alex Hunter">
         </div>
 
-        <div class="card">
-          <div class="card-icon">🔄</div>
-          <h3>Website Revamp & Fixes</h3>
-          <p>Upgrades, redesigns, bug patches, and API integrations for existing web applications that need polish.</p>
-          <ul class="card-features">
-            <li>Responsive mobile restructuring</li>
-            <li>Performance tuning & SEO audit fixes</li>
-            <li>Database and backend migrations</li>
-          </ul>
-          <a href="web_service.html" class="btn btn-secondary" style="width: 100%;">Fix My Site</a>
+        <div class="form-group">
+          <label for="user-email">Email Address</label>
+          <input type="email" id="user-email" class="form-input" placeholder="name@domain.com" required>
         </div>
 
-        <div class="card">
-          <div class="card-icon">🤖</div>
-          <h3>Custom Discord Bots</h3>
-          <p>Scalable, verified-ready bots with customized commands, economy models, moderation logic, and API hooks.</p>
-          <ul class="card-features">
-            <li>Slash-commands & button interactions</li>
-            <li>Payment & webhooks integration</li>
-            <li>24/7 uptime architecture setup</li>
-          </ul>
-          <a href="discord_service.html" class="btn btn-secondary" style="width: 100%;">Build a Bot</a>
+        <div class="form-group">
+          <label for="user-password">Password</label>
+          <input type="password" id="user-password" class="form-input" placeholder="••••••••••••" required>
         </div>
-      </div>
-    </section>
 
-    <!-- Why Choose Innovexa Section -->
-    <section class="container reveal">
-      <div class="card" style="text-align: center; padding: 3.5rem 2rem;">
-        <h2 style="font-size: 2rem; margin-bottom: 1rem;">Engineered for High Reliability</h2>
-        <p style="max-width: 600px; margin: 0 auto 2rem; color: var(--text-muted);">
-          Every system is designed with modern security practices, modular clean code, and zero technical debt.
-        </p>
-        <a href="reviews.html" class="btn btn-primary">Read Client Testimonials</a>
+        <button type="submit" id="auth-submit-btn" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;">
+          Sign In
+        </button>
+      </form>
+
+      <div style="text-align: center; margin-top: 1.5rem; font-size: 0.9rem; color: var(--text-muted);">
+        <span id="toggle-prompt">Don't have an account yet?</span>
+        <button id="toggle-btn" style="background: none; border: none; color: var(--accent-cyan); cursor: pointer; font-weight: 600; margin-left: 5px; font-size: 0.9rem;">Sign Up</button>
       </div>
-    </section>
+    </div>
   </main>
 
-  <footer>
-    <p>&copy; 2026 Innovexa Studio. All rights reserved.</p>
-  </footer>
+  <script src="app.js"></script>
+  <script type="module">
+    import { auth } from "./firebase-config.js";
+    import { 
+      signInWithEmailAndPassword, 
+      createUserWithEmailAndPassword, 
+      updateProfile 
+    } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
 
-  <!-- Background Canvas & Animation Scripts -->
-  <script>
-    // Particle / Starfield Background Effect
-    const canvas = document.getElementById('bg-canvas');
-    const ctx = canvas.getContext('2d');
-    let particles = [];
+    let isSignUp = false;
+    const authTitle = document.getElementById("auth-title");
+    const nameGroup = document.getElementById("name-group");
+    const authSubmitBtn = document.getElementById("auth-submit-btn");
+    const toggleBtn = document.getElementById("toggle-btn");
+    const statusMessage = document.getElementById("status-message");
 
-    function resizeCanvas() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    }
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
+    toggleBtn.onclick = () => {
+      isSignUp = !isSignUp;
+      nameGroup.style.display = isSignUp ? "block" : "none";
+      authTitle.innerText = isSignUp ? "Create an Account" : "Welcome Back";
+      authSubmitBtn.innerText = isSignUp ? "Sign Up" : "Sign In";
+      toggleBtn.innerText = isSignUp ? "Sign In" : "Sign Up";
+    };
 
-    class Particle {
-      constructor() {
-        this.reset();
-      }
-      reset() {
-        this.x = Math.random() * canvas.width;
-        this.y = Math.random() * canvas.height;
-        this.size = Math.random() * 1.8 + 0.4;
-        this.speedX = (Math.random() - 0.5) * 0.4;
-        this.speedY = (Math.random() - 0.5) * 0.4;
-        this.alpha = Math.random() * 0.6 + 0.1;
-      }
-      update() {
-        this.x += this.speedX;
-        this.y += this.speedY;
-        if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) {
-          this.reset();
+    document.getElementById("auth-form").onsubmit = async (e) => {
+      e.preventDefault();
+      const email = document.getElementById("user-email").value.trim();
+      const pass = document.getElementById("user-password").value;
+      const name = document.getElementById("user-name").value.trim();
+
+      authSubmitBtn.disabled = true;
+      try {
+        if (isSignUp) {
+          const cred = await createUserWithEmailAndPassword(auth, email, pass);
+          if (name) await updateProfile(cred.user, { displayName: name });
+        } else {
+          await signInWithEmailAndPassword(auth, email, pass);
         }
+        window.location.href = "reviews.html";
+      } catch (err) {
+        statusMessage.style.display = "block";
+        statusMessage.style.color = "#fca5a5";
+        statusMessage.innerText = err.message;
+        authSubmitBtn.disabled = false;
       }
-      draw() {
-        ctx.fillStyle = `rgba(129, 140, 248, ${this.alpha})`;
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-
-    for (let i = 0; i < 75; i++) {
-      particles.push(new Particle());
-    }
-
-    function animate() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      particles.forEach(p => {
-        p.update();
-        p.draw();
-      });
-      requestAnimationFrame(animate);
-    }
-    animate();
-
-    // Scroll Reveal Effect
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('active');
-        }
-      });
-    }, { threshold: 0.15 });
-
-    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+    };
   </script>
 </body>
 </html>
