@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Innovexa Studio | Login & Registration</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <canvas id="bg-canvas"></canvas>
+  <div class="ambient-glow"></div>
+
+  <nav class="navbar">
+    <a href="index.html" class="nav-brand">
+      <span class="brand-dot"></span>Innovexa Studio
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="web_service.html">Websites</a></li>
+      <li><a href="discord_service.html">Discord Bots</a></li>
+      <li><a href="reviews.html">Reviews</a></li>
+      <li><a href="login.html" class="active btn-nav">Sign In</a></li>
+    </ul>
+  </nav>
+
+  <main style="display: flex; align-items: center; justify-content: center; min-height: 85vh;">
+    <div class="form-box reveal active" style="width: 100%; margin-top: 1rem;">
+      <h2 id="auth-title" style="font-size: 1.7rem; font-weight: 700; margin-bottom: 0.4rem; text-align: center;">Welcome Back</h2>
+      <p id="auth-subtitle" style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.5rem; text-align: center;">
+        Sign in to your account to submit and manage reviews.
+      </p>
+
+      <div id="status-message" style="display: none; padding: 0.8rem; border-radius: 8px; font-size: 0.85rem; margin-bottom: 1.25rem;"></div>
+
+      <form id="auth-form">
+        <div class="form-group" id="name-group" style="display: none;">
+          <label for="user-name">Your Full Name</label>
+          <input type="text" id="user-name" class="form-input" placeholder="e.g. Alex Hunter">
+        </div>
+
+        <div class="form-group">
+          <label for="user-email">Email Address</label>
+          <input type="email" id="user-email" class="form-input" placeholder="name@domain.com" required>
+        </div>
+
+        <div class="form-group">
+          <label for="user-password">Password</label>
+          <input type="password" id="user-password" class="form-input" placeholder="••••••••••••" required>
+        </div>
+
+        <button type="submit" id="auth-submit-btn" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;">
+          Sign In
+        </button>
+      </form>
+
+      <div style="text-align: center; margin-top: 1.5rem; font-size: 0.9rem; color: var(--text-muted);">
+        <span id="toggle-prompt">Don't have an account yet?</span>
+        <button id="toggle-btn" style="background: none; border: none; color: var(--accent-cyan); cursor: pointer; font-weight: 600; margin-left: 5px; font-size: 0.9rem;">Sign Up</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- Firebase Auth Module -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+    import { 
+      getAuth, 
+      signInWithEmailAndPassword, 
+      createUserWithEmailAndPassword, 
+      updateProfile 
+    } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
+
+    // -------------------------------------------------------------
+    // REPLACE WITH YOUR FIREBASE CONFIGURATION CREDENTIALS
+    // -------------------------------------------------------------
+    const firebaseConfig = {
+      apiKey: "YOUR_FIREBASE_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    let isSignUp = false;
+
+    const authTitle = document.getElementById("auth-title");
+    const authSubtitle = document.getElementById("auth-subtitle");
+    const nameGroup = document.getElementById("name-group");
+    const authSubmitBtn = document.getElementById("auth-submit-btn");
+    const toggleBtn = document.getElementById("toggle-btn");
+    const togglePrompt = document.getElementById("toggle-prompt");
+    const statusMessage = document.getElementById("status-message");
+    const authForm = document.getElementById("auth-form");
+
+    function displayStatus(msg, isError = false) {
+      statusMessage.style.display = "block";
+      statusMessage.innerText = msg;
+      if (isError) {
+        statusMessage.style.background = "rgba(239, 68, 68, 0.15)";
+        statusMessage.style.border = "1px solid rgba(239, 68, 68, 0.35)";
+        statusMessage.style.color = "#fca5a5";
+      } else {
+        statusMessage.style.background = "rgba(52, 211, 153, 0.15)";
+        statusMessage.style.border = "1px solid rgba(52, 211, 153, 0.35)";
+        statusMessage.style.color = "#6ee7b7";
+      }
+    }
+
+    // Toggle between Log In and Sign Up mode
+    toggleBtn.addEventListener("click", () => {
+      isSignUp = !isSignUp;
+      statusMessage.style.display = "none";
+      if (isSignUp) {
+        authTitle.innerText = "Create an Account";
+        authSubtitle.innerText = "Register to verify reviews and track your services.";
+        nameGroup.style.display = "block";
+        authSubmitBtn.innerText = "Sign Up";
+        togglePrompt.innerText = "Already registered?";
+        toggleBtn.innerText = "Sign In";
+      } else {
+        authTitle.innerText = "Welcome Back";
+        authSubtitle.innerText = "Sign in to your account to submit and manage reviews.";
+        nameGroup.style.display = "none";
+        authSubmitBtn.innerText = "Sign In";
+        togglePrompt.innerText = "Don't have an account yet?";
+        toggleBtn.innerText = "Sign Up";
+      }
+    });
+
+    // Form Submission Handling
+    authForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = document.getElementById("user-email").value.trim();
+      const password = document.getElementById("user-password").value;
+      const name = document.getElementById("user-name").value.trim();
+
+      authSubmitBtn.disabled = true;
+      authSubmitBtn.innerText = "Please wait...";
+
+      try {
+        if (isSignUp) {
+          const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+          if (name) {
+            await updateProfile(userCredential.user, { displayName: name });
+          }
+          displayStatus("Registration successful! Redirecting to reviews...", false);
+        } else {
+          await signInWithEmailAndPassword(auth, email, password);
+          displayStatus("Logged in successfully! Redirecting...", false);
+        }
+
+        setTimeout(() => {
+          window.location.href = "reviews.html";
+        }, 1200);
+
+      } catch (err) {
+        console.error(err);
+        displayStatus(err.message, true);
+        authSubmitBtn.disabled = false;
+        authSubmitBtn.innerText = isSignUp ? "Sign Up" : "Sign In";
+      }
+    });
+  </script>
+
+  <script>
+    // Particle Canvas Animation
+    const canvas = document.getElementById('bg-canvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+    function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    class Particle {
+      constructor() { this.reset(); }
+      reset() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.size = Math.random() * 1.8 + 0.4;
+        this.speedX = (Math.random() - 0.5) * 0.4;
+        this.speedY = (Math.random() - 0.5) * 0.4;
+        this.alpha = Math.random() * 0.5 + 0.1;
+      }
+      update() {
+        this.x += this.speedX; this.y += this.speedY;
+        if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) this.reset();
+      }
+      draw() {
+        ctx.fillStyle = `rgba(129, 140, 248, ${this.alpha})`;
+        ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+    for (let i = 0; i < 60; i++) particles.push(new Particle());
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(p => { p.update(); p.draw(); });
+      requestAnimationFrame(animate);
+    }
+    animate();
+  </script>
+</body>
+</html>
