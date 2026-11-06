@@ -19,6 +19,14 @@
       border: 1px solid rgba(56, 189, 248, 0.25);
       margin-top: 0.35rem;
     }
+
+    .locked-review-box {
+      text-align: center;
+      padding: 2.5rem 1.5rem;
+      border: 1px dashed rgba(255, 255, 255, 0.15);
+      border-radius: 14px;
+      background: rgba(10, 11, 16, 0.4);
+    }
   </style>
 </head>
 <body>
@@ -42,20 +50,32 @@
     <section class="hero reveal" style="min-height: 35vh; padding-top: 3rem;">
       <div class="badge">Verified Feedback</div>
       <h1>Client <span class="gradient-text">Experiences & Ratings</span></h1>
-      <p>Select a product to view specific testimonials or leave feedback on your project.</p>
+      <p>Read what project owners and founders say about our bots and web developments.</p>
     </section>
 
     <section class="container reveal">
       <div class="form-box">
-        <h3 style="margin-bottom: 0.5rem; font-size: 1.3rem;">Leave a Review</h3>
-        <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1.25rem;">Rate and review the online service you received.</p>
+        <h3 style="margin-bottom: 0.5rem; font-size: 1.35rem;">Leave a Review</h3>
+        <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1.5rem;">Rate and review the service you received.</p>
         
-        <div id="auth-alert" style="display: none; padding: 0.8rem; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; color: #fca5a5; font-size: 0.85rem; margin-bottom: 1rem; cursor: pointer;">
-          You must be logged in to submit a review. <span style="color: #fff; text-decoration: underline;">Click here to Sign In</span>.
+        <!-- LOCKED PROMPT (Shown when Logged Out) -->
+        <div id="auth-lock-card" class="locked-review-box">
+          <div style="font-size: 2.2rem; margin-bottom: 0.5rem;">🔒</div>
+          <h4 style="font-size: 1.1rem; color: #fff; margin-bottom: 0.4rem;">Sign In Required</h4>
+          <p style="font-size: 0.85rem; color: var(--text-muted); max-width: 320px; margin: 0 auto 1.4rem;">
+            Only authenticated clients can submit verified ratings and feedback.
+          </p>
+          <button type="button" id="unlock-login-btn" class="btn btn-primary" style="width: 100%;">
+            Sign In to Post Review
+          </button>
         </div>
 
-        <form id="review-form">
-          <!-- Dynamically populated from data files -->
+        <!-- REVIEW FORM (Hidden until authenticated) -->
+        <form id="review-form" style="display: none;">
+          <div style="margin-bottom: 1.25rem; padding: 0.75rem 1rem; border-radius: 10px; background: rgba(56, 189, 248, 0.08); border: 1px solid rgba(56, 189, 248, 0.2); font-size: 0.85rem; color: #bae6fd;">
+            Posting as: <strong id="logged-in-as" style="color: #fff;">User</strong>
+          </div>
+
           <div class="form-group">
             <label for="review-service">Service Purchased</label>
             <select id="review-service" class="form-input" required></select>
@@ -97,29 +117,41 @@
   <script type="module" src="auth-modal.js"></script>
   <script type="module">
     import { auth, db } from "./firebase-config.js";
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
     import { collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
     import { openAuthModal } from "./auth-modal.js";
     import { populateServiceDropdown } from "./services.js";
 
-    // Auto-populate services dropdown from centralized data files
     populateServiceDropdown("review-service", true);
 
-    let currentUser = null;
-    const authAlert = document.getElementById("auth-alert");
+    const authLockCard = document.getElementById("auth-lock-card");
     const reviewForm = document.getElementById("review-form");
+    const loggedInAs = document.getElementById("logged-in-as");
+    const unlockLoginBtn = document.getElementById("unlock-login-btn");
     const reviewsContainer = document.getElementById("reviews-container");
     const loadingSpinner = document.getElementById("loading-spinner");
 
-    window.addEventListener('auth-changed', (e) => {
-      currentUser = e.detail.user;
-      authAlert.style.display = currentUser ? "none" : "block";
+    unlockLoginBtn.onclick = () => openAuthModal(false);
+
+    // Hard gate: Form is completely hidden unless auth state is confirmed
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        authLockCard.style.display = "none";
+        reviewForm.style.display = "block";
+        loggedInAs.innerText = user.displayName || user.email.split('@')[0];
+      } else {
+        authLockCard.style.display = "block";
+        reviewForm.style.display = "none";
+      }
     });
 
-    authAlert.onclick = () => openAuthModal(false);
-
+    // Guard on form submission
     reviewForm.addEventListener("submit", async (e) => {
       e.preventDefault();
-      if (!currentUser) {
+      
+      const user = auth.currentUser;
+      if (!user) {
+        alert("You must be logged in to submit a review.");
         openAuthModal(false);
         return;
       }
@@ -129,27 +161,30 @@
       const comment = document.getElementById("review-comment").value.trim();
       const btn = document.getElementById("submit-review-btn");
 
+      if (!comment) return;
+
       btn.disabled = true;
       btn.innerText = "Posting...";
 
       try {
         await addDoc(collection(db, "reviews"), {
-          authorName: currentUser.displayName || currentUser.email.split('@')[0],
-          userId: currentUser.uid,
+          authorName: user.displayName || user.email.split('@')[0],
+          userId: user.uid,
           service: servicePurchased,
-          rating,
-          comment,
+          rating: rating,
+          comment: comment,
           createdAt: serverTimestamp()
         });
         reviewForm.reset();
       } catch (err) {
-        alert("Error: " + err.message);
+        alert("Failed to post: " + err.message);
       } finally {
         btn.disabled = false;
         btn.innerText = "Post Review";
       }
     });
 
+    // Realtime reviews list
     const q = query(collection(db, "reviews"), orderBy("createdAt", "desc"));
     onSnapshot(q, (snap) => {
       loadingSpinner.style.display = "none";
@@ -167,7 +202,7 @@
           <div class="review-card reveal active">
             <div class="review-header">
               <div>
-                <div class="reviewer-name">${d.authorName}</div>
+                <div class="reviewer-name">${escapeHtml(d.authorName)}</div>
                 <div class="service-tag">${escapeHtml(serviceName)}</div>
               </div>
               <span class="review-stars">${stars}</span>
