@@ -13,7 +13,7 @@ export function renderServiceCards(containerId, servicesList) {
       <h3>${s.name}</h3>
       <p>${s.description}</p>
       <div style="font-size: 1.4rem; font-weight: 800; color: var(--accent-cyan); margin-bottom: 1rem;">
-        $${s.price} <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: normal;">USD</span>
+        ৳${s.price.toLocaleString()} <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: normal;">BDT</span>
       </div>
       <ul class="card-features">
         ${s.features.map(f => `<li>${f}</li>`).join("")}
@@ -30,11 +30,11 @@ export function populateServiceDropdown(selectId, includeAllOption = false) {
   let options = includeAllOption ? `<option value="General Service">General Service / All</option>` : "";
 
   options += `<optgroup label="Web Development">` +
-    webServices.map(s => `<option value="${s.name}" data-plan="${s.id}" data-price="${s.price}">${s.name} — $${s.price}</option>`).join("") +
+    webServices.map(s => `<option value="${s.name}" data-plan="${s.id}" data-price="${s.price}">${s.name} — ৳${s.price.toLocaleString()} BDT</option>`).join("") +
     `</optgroup>`;
 
   options += `<optgroup label="Discord Bot Development">` +
-    discordServices.map(s => `<option value="${s.name}" data-plan="${s.id}" data-price="${s.price}">${s.name} — $${s.price}</option>`).join("") +
+    discordServices.map(s => `<option value="${s.name}" data-plan="${s.id}" data-price="${s.price}">${s.name} — ৳${s.price.toLocaleString()} BDT</option>`).join("") +
     `</optgroup>`;
 
   select.innerHTML = options;
