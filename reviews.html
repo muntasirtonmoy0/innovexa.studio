@@ -8,6 +8,18 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    .service-tag {
+      display: inline-block;
+      font-size: 0.72rem;
+      padding: 0.2rem 0.6rem;
+      border-radius: 6px;
+      background: rgba(56, 189, 248, 0.12);
+      color: var(--accent-cyan);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      margin-top: 0.35rem;
+    }
+  </style>
 </head>
 <body>
   <canvas id="bg-canvas"></canvas>
@@ -27,22 +39,28 @@
   </nav>
 
   <main>
-    <section class="hero reveal" style="min-height: 40vh; padding-top: 3rem;">
-      <div class="badge">Community Feedback</div>
+    <section class="hero reveal" style="min-height: 35vh; padding-top: 3rem;">
+      <div class="badge">Verified Feedback</div>
       <h1>Client <span class="gradient-text">Experiences & Ratings</span></h1>
-      <p>Read what project owners and founders say about our bots and web developments.</p>
+      <p>Select a product to view specific testimonials or leave feedback on your project.</p>
     </section>
 
     <section class="container reveal">
       <div class="form-box">
         <h3 style="margin-bottom: 0.5rem; font-size: 1.3rem;">Leave a Review</h3>
-        <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1.25rem;">Share feedback on your website or Discord bot build.</p>
+        <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1.25rem;">Rate and review the online service you received.</p>
         
         <div id="auth-alert" style="display: none; padding: 0.8rem; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; color: #fca5a5; font-size: 0.85rem; margin-bottom: 1rem; cursor: pointer;">
           You must be logged in to submit a review. <span style="color: #fff; text-decoration: underline;">Click here to Sign In</span>.
         </div>
 
         <form id="review-form">
+          <!-- Dynamically populated from data files -->
+          <div class="form-group">
+            <label for="review-service">Service Purchased</label>
+            <select id="review-service" class="form-input" required></select>
+          </div>
+
           <div class="form-group">
             <label for="review-rating">Rating</label>
             <select id="review-rating" class="form-input" required>
@@ -53,17 +71,19 @@
               <option value="1">⭐ (1 / 5 - Poor)</option>
             </select>
           </div>
+
           <div class="form-group">
             <label for="review-comment">Your Feedback</label>
             <textarea id="review-comment" class="form-input" placeholder="How was our communication, delivery, and code quality?" required></textarea>
           </div>
+
           <button type="submit" id="submit-review-btn" class="btn btn-primary" style="width: 100%;">Post Review</button>
         </form>
       </div>
 
       <div class="section-title" style="margin-top: 4rem;">
         <h2>All Reviews</h2>
-        <div id="loading-spinner" style="color: var(--text-muted); font-size: 0.9rem; margin-top: 1rem;">Loading verified reviews...</div>
+        <div id="loading-spinner" style="color: var(--text-muted); font-size: 0.9rem; margin-top: 1rem;">Loading reviews...</div>
       </div>
       <div class="reviews-grid" id="reviews-container"></div>
     </section>
@@ -79,6 +99,10 @@
     import { auth, db } from "./firebase-config.js";
     import { collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
     import { openAuthModal } from "./auth-modal.js";
+    import { populateServiceDropdown } from "./services.js";
+
+    // Auto-populate services dropdown from centralized data files
+    populateServiceDropdown("review-service", true);
 
     let currentUser = null;
     const authAlert = document.getElementById("auth-alert");
@@ -100,7 +124,8 @@
         return;
       }
 
-      const rating = parseInt(document.getElementById("review-rating").value);
+      const servicePurchased = document.getElementById("review-service").value;
+      const rating = parseInt(document.getElementById("review-rating").value, 10);
       const comment = document.getElementById("review-comment").value.trim();
       const btn = document.getElementById("submit-review-btn");
 
@@ -111,6 +136,7 @@
         await addDoc(collection(db, "reviews"), {
           authorName: currentUser.displayName || currentUser.email.split('@')[0],
           userId: currentUser.uid,
+          service: servicePurchased,
           rating,
           comment,
           createdAt: serverTimestamp()
@@ -128,31 +154,36 @@
     onSnapshot(q, (snap) => {
       loadingSpinner.style.display = "none";
       reviewsContainer.innerHTML = snap.empty 
-        ? `<p style="grid-column:1/-1; text-align:center; color:var(--text-muted);">No reviews yet. Be the first to leave one!</p>` 
+        ? `<p style="grid-column:1/-1; text-align:center; color:var(--text-muted);">No reviews posted yet.</p>` 
         : "";
 
       snap.forEach(doc => {
         const d = doc.data();
         const stars = "★".repeat(d.rating) + "☆".repeat(5 - d.rating);
         const date = d.createdAt ? new Date(d.createdAt.toDate()).toLocaleDateString() : "Just now";
+        const serviceName = d.service || "General Service";
+
         reviewsContainer.insertAdjacentHTML('beforeend', `
           <div class="review-card reveal active">
             <div class="review-header">
-              <span class="reviewer-name">${d.authorName}</span>
+              <div>
+                <div class="reviewer-name">${d.authorName}</div>
+                <div class="service-tag">${escapeHtml(serviceName)}</div>
+              </div>
               <span class="review-stars">${stars}</span>
             </div>
-            <p class="review-text">${escapeHtml(d.comment)}</p>
+            <p class="review-text" style="margin-top:0.8rem;">${escapeHtml(d.comment)}</p>
             <div class="review-date">${date}</div>
           </div>
         `);
       });
     }, (error) => {
-      loadingSpinner.innerText = "Error loading reviews. Check Firestore rules.";
+      loadingSpinner.innerText = "Error loading reviews.";
     });
 
-    function escapeHtml(string) {
+    function escapeHtml(str) {
       const div = document.createElement('div');
-      div.innerText = string;
+      div.innerText = str;
       return div.innerHTML;
     }
   </script>
