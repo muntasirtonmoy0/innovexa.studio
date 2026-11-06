@@ -39,46 +39,8 @@
         <p>Built with Discord.js (v14+), TypeScript/Node.js, and rock-solid error handling.</p>
       </div>
 
-      <div class="grid">
-        <div class="card">
-          <div class="card-icon">🛡️</div>
-          <h3>Server Security & Auto-Mod</h3>
-          <p>Protect your server from spam, phishing links, mass pings, and unauthorized raid activity.</p>
-          <ul class="card-features">
-            <li>Regex & AI message filtration</li>
-            <li>Custom verification & captcha flows</li>
-            <li>Granular mod logs & audit exports</li>
-            <li>Role protection & timeout automation</li>
-          </ul>
-          <a href="payment.html?plan=bot-security" class="btn btn-primary" style="width: 100%;">Deploy Security Bot</a>
-        </div>
-
-        <div class="card">
-          <div class="card-icon">💰</div>
-          <h3>Economy & Leveling Systems</h3>
-          <p>Keep community members active with custom currency, XP mechanics, item shops, and gambling minigames.</p>
-          <ul class="card-features">
-            <li>Persistent user balances (MongoDB/SQLite)</li>
-            <li>Interactive server leaderboards & cards</li>
-            <li>Daily quests, work, and reward mechanics</li>
-            <li>Role-reward synchronization</li>
-          </ul>
-          <a href="payment.html?plan=bot-economy" class="btn btn-primary" style="width: 100%;">Deploy Economy Bot</a>
-        </div>
-
-        <div class="card">
-          <div class="card-icon">🔌</div>
-          <h3>API, Games & Payment Bridges</h3>
-          <p>Sync in-game items, deliver customer purchases, or pull third-party real-time APIs right inside chat.</p>
-          <ul class="card-features">
-            <li>Stripe & PayPal payment webhooks</li>
-            <li>Minecraft/Roblox server sync & RCON commands</li>
-            <li>Custom OpenAI / Gemini AI conversational agents</li>
-            <li>Automated customer support ticket system</li>
-          </ul>
-          <a href="payment.html?plan=bot-api" class="btn btn-primary" style="width: 100%;">Order Custom Integration</a>
-        </div>
-      </div>
+      <!-- Dynamically populated from discord-services-data.js -->
+      <div class="grid" id="discord-services-grid"></div>
     </section>
 
     <!-- Technical Specs -->
@@ -102,45 +64,12 @@
     <p>&copy; 2026 Innovexa Studio. All rights reserved.</p>
   </footer>
 
-  <script>
-    const canvas = document.getElementById('bg-canvas');
-    const ctx = canvas.getContext('2d');
-    let particles = [];
-    function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
-
-    class Particle {
-      constructor() { this.reset(); }
-      reset() {
-        this.x = Math.random() * canvas.width;
-        this.y = Math.random() * canvas.height;
-        this.size = Math.random() * 1.8 + 0.4;
-        this.speedX = (Math.random() - 0.5) * 0.4;
-        this.speedY = (Math.random() - 0.5) * 0.4;
-        this.alpha = Math.random() * 0.5 + 0.1;
-      }
-      update() {
-        this.x += this.speedX; this.y += this.speedY;
-        if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) this.reset();
-      }
-      draw() {
-        ctx.fillStyle = `rgba(129, 140, 248, ${this.alpha})`;
-        ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill();
-      }
-    }
-    for (let i = 0; i < 60; i++) particles.push(new Particle());
-    function animate() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      particles.forEach(p => { p.update(); p.draw(); });
-      requestAnimationFrame(animate);
-    }
-    animate();
-
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('active'); });
-    }, { threshold: 0.15 });
-    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+  <script src="app.js"></script>
+  <script type="module" src="auth-modal.js"></script>
+  <script type="module">
+    import { discordServices } from "./discord-services-data.js";
+    import { renderServiceCards } from "./services.js";
+    renderServiceCards("discord-services-grid", discordServices);
   </script>
 </body>
 </html>
