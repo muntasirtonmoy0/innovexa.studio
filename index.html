@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Innovexa Studio | Digital Solutions & Discord Engineering</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <canvas id="bg-canvas"></canvas>
+  <div class="ambient-glow"></div>
+
+  <!-- Navigation -->
+  <nav class="navbar">
+    <a href="index.html" class="nav-brand">
+      <span class="brand-dot"></span>Innovexa Studio
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html" class="active">Home</a></li>
+      <li><a href="web_service.html">Websites</a></li>
+      <li><a href="discord_service.html">Discord Bots</a></li>
+      <li><a href="reviews.html">Reviews</a></li>
+      <li id="auth-nav-item"><a href="login.html" class="btn-nav">Sign In</a></li>
+    </ul>
+  </nav>
+
+  <main>
+    <!-- Hero Section -->
+    <section class="hero reveal">
+      <div class="badge">Next-Gen Digital Craftsmanship</div>
+      <h1>We Build Scalable <span class="gradient-text">Websites & Custom Discord Bots</span></h1>
+      <p>Transforming complex technical ideas into responsive, ultra-fast online platforms and feature-packed server automation tools.</p>
+      <div class="hero-actions">
+        <a href="web_service.html" class="btn btn-primary">Explore Web Services</a>
+        <a href="discord_service.html" class="btn btn-secondary">Explore Discord Bots</a>
+      </div>
+    </section>
+
+    <!-- Services Overview -->
+    <section class="container reveal">
+      <div class="section-title">
+        <h2>What We Do</h2>
+        <p>End-to-end web architecture, platform refreshes, and community infrastructure.</p>
+      </div>
+      <div class="grid">
+        <div class="card">
+          <div class="card-icon">⚡</div>
+          <h3>Full-Stack Web Dev</h3>
+          <p>Bespoke frontend interfaces and complete website development tailored for conversion and lightning speeds.</p>
+          <ul class="card-features">
+            <li>Modern interactive layouts & UI</li>
+            <li>Zero bloat, performance-focused code</li>
+            <li>Mobile and search-optimized architectures</li>
+          </ul>
+          <a href="web_service.html" class="btn btn-secondary" style="width: 100%;">View Packages</a>
+        </div>
+
+        <div class="card">
+          <div class="card-icon">🔄</div>
+          <h3>Website Revamp & Fixes</h3>
+          <p>Upgrades, redesigns, bug patches, and API integrations for existing web applications that need polish.</p>
+          <ul class="card-features">
+            <li>Responsive mobile restructuring</li>
+            <li>Performance tuning & SEO audit fixes</li>
+            <li>Database and backend migrations</li>
+          </ul>
+          <a href="web_service.html" class="btn btn-secondary" style="width: 100%;">Fix My Site</a>
+        </div>
+
+        <div class="card">
+          <div class="card-icon">🤖</div>
+          <h3>Custom Discord Bots</h3>
+          <p>Scalable, verified-ready bots with customized commands, economy models, moderation logic, and API hooks.</p>
+          <ul class="card-features">
+            <li>Slash-commands & button interactions</li>
+            <li>Payment & webhooks integration</li>
+            <li>24/7 uptime architecture setup</li>
+          </ul>
+          <a href="discord_service.html" class="btn btn-secondary" style="width: 100%;">Build a Bot</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Why Choose Innovexa Section -->
+    <section class="container reveal">
+      <div class="card" style="text-align: center; padding: 3.5rem 2rem;">
+        <h2 style="font-size: 2rem; margin-bottom: 1rem;">Engineered for High Reliability</h2>
+        <p style="max-width: 600px; margin: 0 auto 2rem; color: var(--text-muted);">
+          Every system is designed with modern security practices, modular clean code, and zero technical debt.
+        </p>
+        <a href="reviews.html" class="btn btn-primary">Read Client Testimonials</a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Innovexa Studio. All rights reserved.</p>
+  </footer>
+
+  <!-- Background Canvas & Animation Scripts -->
+  <script>
+    // Particle / Starfield Background Effect
+    const canvas = document.getElementById('bg-canvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    class Particle {
+      constructor() {
+        this.reset();
+      }
+      reset() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.size = Math.random() * 1.8 + 0.4;
+        this.speedX = (Math.random() - 0.5) * 0.4;
+        this.speedY = (Math.random() - 0.5) * 0.4;
+        this.alpha = Math.random() * 0.6 + 0.1;
+      }
+      update() {
+        this.x += this.speedX;
+        this.y += this.speedY;
+        if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) {
+          this.reset();
+        }
+      }
+      draw() {
+        ctx.fillStyle = `rgba(129, 140, 248, ${this.alpha})`;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+
+    for (let i = 0; i < 75; i++) {
+      particles.push(new Particle());
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(p => {
+        p.update();
+        p.draw();
+      });
+      requestAnimationFrame(animate);
+    }
+    animate();
+
+    // Scroll Reveal Effect
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('active');
+        }
+      });
+    }, { threshold: 0.15 });
+
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+  </script>
+</body>
+</html>
