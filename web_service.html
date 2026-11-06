@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Innovexa Studio | Web Development & Maintenance</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <canvas id="bg-canvas"></canvas>
+  <div class="ambient-glow"></div>
+
+  <nav class="navbar">
+    <a href="index.html" class="nav-brand">
+      <span class="brand-dot"></span>Innovexa Studio
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="web_service.html" class="active">Websites</a></li>
+      <li><a href="discord_service.html">Discord Bots</a></li>
+      <li><a href="reviews.html">Reviews</a></li>
+      <li><a href="login.html" class="btn-nav">Sign In</a></li>
+    </ul>
+  </nav>
+
+  <main>
+    <section class="hero reveal">
+      <div class="badge">Web Engineering</div>
+      <h1>Modern Websites <span class="gradient-text">That Drive Results</span></h1>
+      <p>From single-page landing experiences to complex full-stack web platforms and performance revamps.</p>
+    </section>
+
+    <section class="container reveal">
+      <div class="section-title">
+        <h2>Web Development Packages</h2>
+        <p>Pick the package that matches your operational needs or request a customized build.</p>
+      </div>
+
+      <div class="grid">
+        <div class="card">
+          <div class="card-icon">🚀</div>
+          <h3>High-Converting Landing Page</h3>
+          <p>Perfect for SaaS launches, creative portfolios, indie products, or digital agencies.</p>
+          <ul class="card-features">
+            <li>Interactive custom animations</li>
+            <li>Fully responsive (Mobile/Tablet/Desktop)</li>
+            <li>Contact forms & webhook notifications</li>
+            <li>SEO metadata configuration</li>
+          </ul>
+          <a href="reviews.html" class="btn btn-primary" style="width: 100%;">Order Landing Page</a>
+        </div>
+
+        <div class="card">
+          <div class="card-icon">🛠️</div>
+          <h3>Website Redesign & Upgrades</h3>
+          <p>Bring an outdated site to modern design standards with faster loading and cleaner code.</p>
+          <ul class="card-features">
+            <li>Visual modernization & CSS refresh</li>
+            <li>Page speed & asset optimization</li>
+            <li>Broken scripts & cross-browser fixes</li>
+            <li>Responsive UX refactoring</li>
+          </ul>
+          <a href="reviews.html" class="btn btn-primary" style="width: 100%;">Upgrade Existing Site</a>
+        </div>
+
+        <div class="card">
+          <div class="card-icon">⚙️</div>
+          <h3>Custom Dynamic Web App</h3>
+          <p>Full web solutions featuring database storage, user logins, dashboards, and API workflows.</p>
+          <ul class="card-features">
+            <li>Firebase / Node.js integration</li>
+            <li>User authentication & protected routes</li>
+            <li>Real-time dashboard views</li>
+            <li>Automated deployments (Vercel, Render)</li>
+          </ul>
+          <a href="reviews.html" class="btn btn-primary" style="width: 100%;">Build Web App</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Development Workflow Section -->
+    <section class="container reveal">
+      <div class="section-title">
+        <h2>Our 4-Step Process</h2>
+      </div>
+      <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
+        <div class="card">
+          <h3 style="color: var(--accent-cyan);">01. Discovery</h3>
+          <p>Reviewing goals, specs, and design preferences.</p>
+        </div>
+        <div class="card">
+          <h3 style="color: var(--accent-cyan);">02. Prototype</h3>
+          <p>Structuring interactive UI and core component layouts.</p>
+        </div>
+        <div class="card">
+          <h3 style="color: var(--accent-cyan);">03. Development</h3>
+          <p>Writing clean, production-ready code with responsive tests.</p>
+        </div>
+        <div class="card">
+          <h3 style="color: var(--accent-cyan);">04. Deployment</h3>
+          <p>Going live with SSL, domain setup, and ongoing support.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Innovexa Studio. All rights reserved.</p>
+  </footer>
+
+  <script>
+    // Particle Background
+    const canvas = document.getElementById('bg-canvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+    function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    class Particle {
+      constructor() { this.reset(); }
+      reset() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.size = Math.random() * 1.8 + 0.4;
+        this.speedX = (Math.random() - 0.5) * 0.4;
+        this.speedY = (Math.random() - 0.5) * 0.4;
+        this.alpha = Math.random() * 0.5 + 0.1;
+      }
+      update() {
+        this.x += this.speedX; this.y += this.speedY;
+        if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) this.reset();
+      }
+      draw() {
+        ctx.fillStyle = `rgba(56, 189, 248, ${this.alpha})`;
+        ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+    for (let i = 0; i < 60; i++) particles.push(new Particle());
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(p => { p.update(); p.draw(); });
+      requestAnimationFrame(animate);
+    }
+    animate();
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('active'); });
+    }, { threshold: 0.15 });
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+  </script>
+</body>
+</html>
