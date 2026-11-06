@@ -39,46 +39,8 @@
         <p>Pick the package that matches your operational needs or request a customized build.</p>
       </div>
 
-      <div class="grid">
-        <div class="card">
-          <div class="card-icon">🚀</div>
-          <h3>High-Converting Landing Page</h3>
-          <p>Perfect for SaaS launches, creative portfolios, indie products, or digital agencies.</p>
-          <ul class="card-features">
-            <li>Interactive custom animations</li>
-            <li>Fully responsive (Mobile/Tablet/Desktop)</li>
-            <li>Contact forms & webhook notifications</li>
-            <li>SEO metadata configuration</li>
-          </ul>
-          <a href="payment.html?plan=landing" class="btn btn-primary" style="width: 100%;">Order Landing Page</a>
-        </div>
-
-        <div class="card">
-          <div class="card-icon">🛠️</div>
-          <h3>Website Redesign & Upgrades</h3>
-          <p>Bring an outdated site to modern design standards with faster loading and cleaner code.</p>
-          <ul class="card-features">
-            <li>Visual modernization & CSS refresh</li>
-            <li>Page speed & asset optimization</li>
-            <li>Broken scripts & cross-browser fixes</li>
-            <li>Responsive UX refactoring</li>
-          </ul>
-          <a href="payment.html?plan=redesign" class="btn btn-primary" style="width: 100%;">Upgrade Existing Site</a>
-        </div>
-
-        <div class="card">
-          <div class="card-icon">⚙️</div>
-          <h3>Custom Dynamic Web App</h3>
-          <p>Full web solutions featuring database storage, user logins, dashboards, and API workflows.</p>
-          <ul class="card-features">
-            <li>Firebase / Node.js integration</li>
-            <li>User authentication & protected routes</li>
-            <li>Real-time dashboard views</li>
-            <li>Automated deployments (Vercel, Render)</li>
-          </ul>
-          <a href="payment.html?plan=webapp" class="btn btn-primary" style="width: 100%;">Build Web App</a>
-        </div>
-      </div>
+      <!-- Dynamically populated from web-services-data.js -->
+      <div class="grid" id="web-services-grid"></div>
     </section>
 
     <!-- Development Workflow Section -->
@@ -111,46 +73,12 @@
     <p>&copy; 2026 Innovexa Studio. All rights reserved.</p>
   </footer>
 
-  <script>
-    // Particle Background
-    const canvas = document.getElementById('bg-canvas');
-    const ctx = canvas.getContext('2d');
-    let particles = [];
-    function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
-
-    class Particle {
-      constructor() { this.reset(); }
-      reset() {
-        this.x = Math.random() * canvas.width;
-        this.y = Math.random() * canvas.height;
-        this.size = Math.random() * 1.8 + 0.4;
-        this.speedX = (Math.random() - 0.5) * 0.4;
-        this.speedY = (Math.random() - 0.5) * 0.4;
-        this.alpha = Math.random() * 0.5 + 0.1;
-      }
-      update() {
-        this.x += this.speedX; this.y += this.speedY;
-        if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) this.reset();
-      }
-      draw() {
-        ctx.fillStyle = `rgba(56, 189, 248, ${this.alpha})`;
-        ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill();
-      }
-    }
-    for (let i = 0; i < 60; i++) particles.push(new Particle());
-    function animate() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      particles.forEach(p => { p.update(); p.draw(); });
-      requestAnimationFrame(animate);
-    }
-    animate();
-
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('active'); });
-    }, { threshold: 0.15 });
-    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+  <script src="app.js"></script>
+  <script type="module" src="auth-modal.js"></script>
+  <script type="module">
+    import { webServices } from "./web-services-data.js";
+    import { renderServiceCards } from "./services.js";
+    renderServiceCards("web-services-grid", webServices);
   </script>
 </body>
 </html>
