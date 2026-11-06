@@ -109,6 +109,7 @@
 
     <div class="container reveal">
       <div class="payment-layout">
+        <!-- Order & User Info Form -->
         <div class="card" style="padding: 2.2rem;">
           <h2 style="font-size: 1.4rem; margin-bottom: 0.5rem;">Client & Project Details</h2>
           <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1.8rem;">
@@ -122,14 +123,8 @@
           <form id="order-form">
             <div class="form-group">
               <label for="order-service">Selected Package</label>
-              <select id="order-service" class="form-input">
-                <option value="landing" data-price="49">High-Converting Landing Page — $49</option>
-                <option value="redesign" data-price="79">Website Redesign & Upgrades — $79</option>
-                <option value="webapp" data-price="149">Custom Dynamic Web App — $149</option>
-                <option value="bot-security" data-price="39">Discord Auto-Mod & Security Bot — $39</option>
-                <option value="bot-economy" data-price="59">Discord Economy & Leveling Bot — $59</option>
-                <option value="bot-api" data-price="99">Discord API & Custom Integrations — $99</option>
-              </select>
+              <!-- Options populated automatically from data files -->
+              <select id="order-service" class="form-input"></select>
             </div>
 
             <div class="form-group">
@@ -164,6 +159,7 @@
           </form>
         </div>
 
+        <!-- Sticky Summary Box -->
         <div class="order-summary-box">
           <h3 style="font-size: 1.25rem; margin-bottom: 1.25rem;">Order Summary</h3>
           <div class="summary-line">
@@ -204,6 +200,10 @@
     import { auth, db } from "./firebase-config.js";
     import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
     import { openAuthModal } from "./auth-modal.js";
+    import { populateServiceDropdown } from "./services.js";
+
+    // Build options dynamically from data files
+    populateServiceDropdown("order-service", false);
 
     let currentUser = null;
     const authAlert = document.getElementById("auth-alert");
@@ -218,17 +218,23 @@
 
     authAlert.onclick = () => openAuthModal(false);
 
-    const preselectedPlan = new URLSearchParams(window.location.search).get('plan');
-    if (preselectedPlan) {
+    // Auto-select package passed from URL query parameter (?plan=...)
+    const urlPlan = new URLSearchParams(window.location.search).get('plan');
+    if (urlPlan) {
       for (let opt of serviceSelect.options) {
-        if (opt.value === preselectedPlan) { serviceSelect.value = preselectedPlan; break; }
+        if (opt.getAttribute('data-plan') === urlPlan) {
+          serviceSelect.value = opt.value;
+          break;
+        }
       }
     }
 
     function updateSummary() {
       const opt = serviceSelect.options[serviceSelect.selectedIndex];
-      summaryTitle.innerText = opt.text.split('—')[0].trim();
-      summaryPrice.innerText = `$${opt.getAttribute('data-price')} USD`;
+      if (!opt) return;
+      const price = opt.getAttribute('data-price');
+      summaryTitle.innerText = opt.value;
+      summaryPrice.innerText = `$${price} USD`;
     }
     serviceSelect.onchange = updateSummary;
     updateSummary();
@@ -258,7 +264,7 @@
         await addDoc(collection(db, "orders"), {
           userId: currentUser.uid,
           userEmail: currentUser.email,
-          servicePlan: opt.text.split('—')[0].trim(),
+          servicePlan: opt.value,
           priceUSD: opt.getAttribute('data-price'),
           paymentMethod: selectedMethod,
           discordHandle: document.getElementById('contact-discord').value.trim() || "N/A",
@@ -266,7 +272,7 @@
           status: "pending_payment",
           createdAt: serverTimestamp()
         });
-        alert("Order placed successfully! We will reach out shortly.");
+        alert("Order received! We will reach out to verify and deliver your service.");
         window.location.href = "index.html";
       } catch (err) {
         alert("Error: " + err.message);
