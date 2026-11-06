@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Innovexa Studio | Secure Order Checkout</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    .payment-layout {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 2rem;
+      align-items: start;
+      max-width: 1000px;
+      margin: 2rem auto;
+    }
+
+    .payment-options {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .pay-method-card {
+      border: 1px solid var(--card-border);
+      background: rgba(10, 11, 16, 0.5);
+      border-radius: 12px;
+      padding: 1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+
+    .pay-method-card:hover {
+      border-color: var(--accent-purple);
+    }
+
+    .pay-method-card.active {
+      border-color: var(--accent-cyan);
+      background: rgba(56, 189, 248, 0.1);
+      box-shadow: 0 0 15px rgba(56, 189, 248, 0.15);
+    }
+
+    .order-summary-box {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 2.2rem;
+      backdrop-filter: blur(16px);
+      position: sticky;
+      top: 120px;
+    }
+
+    .summary-line {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.8rem;
+      font-size: 0.95rem;
+      color: var(--text-muted);
+    }
+
+    .summary-line.total {
+      border-top: 1px solid var(--card-border);
+      padding-top: 1rem;
+      margin-top: 1rem;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    @media (max-width: 820px) {
+      .payment-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="bg-canvas"></canvas>
+  <div class="ambient-glow"></div>
+
+  <!-- Navigation -->
+  <nav class="navbar">
+    <a href="index.html" class="nav-brand">
+      <span class="brand-dot"></span>Innovexa Studio
+    </a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="web_service.html">Websites</a></li>
+      <li><a href="discord_service.html">Discord Bots</a></li>
+      <li><a href="reviews.html">Reviews</a></li>
+      <li id="auth-nav-item"><a href="login.html" class="btn-nav">Sign In</a></li>
+    </ul>
+  </nav>
+
+  <main>
+    <section class="hero reveal" style="min-height: 25vh; padding-top: 2rem; padding-bottom: 1rem;">
+      <div class="badge">Direct Checkout</div>
+      <h1>Order <span class="gradient-text">Configuration</span></h1>
+      <p>Confirm your service specifications and initiate development setup.</p>
+    </section>
+
+    <div class="container reveal">
+      <div class="payment-layout">
+        <!-- Order & User Info Form -->
+        <div class="card" style="padding: 2.2rem;">
+          <h2 style="font-size: 1.4rem; margin-bottom: 0.5rem;">Client & Project Details</h2>
+          <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1.8rem;">
+            Enter your Discord username or contact details so we can deliver your files or invite link.
+          </p>
+
+          <div id="auth-alert" style="display: none; padding: 0.8rem; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; color: #fca5a5; font-size: 0.85rem; margin-bottom: 1.2rem;">
+            Please <a href="login.html" style="color: #fff; text-decoration: underline;">sign in</a> to associate this purchase with your account.
+          </div>
+
+          <form id="order-form">
+            <div class="form-group">
+              <label for="order-service">Selected Package</label>
+              <select id="order-service" class="form-input">
+                <option value="landing" data-price="49">High-Converting Landing Page — $49</option>
+                <option value="redesign" data-price="79">Website Redesign & Upgrades — $79</option>
+                <option value="webapp" data-price="149">Custom Dynamic Web App — $149</option>
+                <option value="bot-security" data-price="39">Discord Auto-Mod & Security Bot — $39</option>
+                <option value="bot-economy" data-price="59">Discord Economy & Leveling Bot — $59</option>
+                <option value="bot-api" data-price="99">Discord API & Custom Integrations — $99</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="contact-discord">Your Discord Handle / Tag (Optional)</label>
+              <input type="text" id="contact-discord" class="form-input" placeholder="e.g. username#0000 or @handle">
+            </div>
+
+            <div class="form-group">
+              <label for="project-notes">Project Requirements / Custom Notes</label>
+              <textarea id="project-notes" class="form-input" placeholder="Tell us about your brand colors, server ID, API needs, or hosting preference..."></textarea>
+            </div>
+
+            <label style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.6rem;">Payment Method</label>
+            <div class="payment-options">
+              <div class="pay-method-card active" data-method="bKash / Nagad">
+                <span>📱</span> bKash / Nagad
+              </div>
+              <div class="pay-method-card" data-method="Crypto (USDT / LTC)">
+                <span>⚡</span> Crypto (USDT)
+              </div>
+              <div class="pay-method-card" data-method="PayPal">
+                <span>🅿️</span> PayPal
+              </div>
+              <div class="pay-method-card" data-method="Card / Stripe">
+                <span>💳</span> Credit Card
+              </div>
+            </div>
+
+            <button type="submit" id="submit-order-btn" class="btn btn-primary" style="width: 100%;">
+              Confirm & Request Invoice
+            </button>
+          </form>
+        </div>
+
+        <!-- Sticky Summary Box -->
+        <div class="order-summary-box">
+          <h3 style="font-size: 1.25rem; margin-bottom: 1.25rem;">Order Summary</h3>
+          <div class="summary-line">
+            <span>Service Name</span>
+            <span id="summary-title" style="color: #fff; text-align: right; font-weight: 500;">Landing Page</span>
+          </div>
+          <div class="summary-line">
+            <span>Turnaround Time</span>
+            <span style="color: #fff;">2 - 5 Days</span>
+          </div>
+          <div class="summary-line">
+            <span>Revisions Included</span>
+            <span style="color: #fff;">Unlimited Fixes</span>
+          </div>
+          <div class="summary-line">
+            <span>Deployment Assistance</span>
+            <span style="color: var(--accent-green);">Included (Free)</span>
+          </div>
+          <div class="summary-line total">
+            <span>Total Payable</span>
+            <span id="summary-price" style="color: var(--accent-cyan);">$49 USD</span>
+          </div>
+          <p style="font-size: 0.78rem; color: var(--text-muted); margin-top: 1rem; line-height: 1.4;">
+            Once confirmed, our developers will reach out through your dashboard/Discord to begin workspace initialization.
+          </p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Innovexa Studio. All rights reserved.</p>
+  </footer>
+
+  <!-- Firebase Script for Order Handling -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
+    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+
+    // REPLACE WITH YOUR FIREBASE CONFIG
+    const firebaseConfig = {
+      apiKey: "YOUR_FIREBASE_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let currentUser = null;
+    const authNav = document.getElementById("auth-nav-item");
+    const authAlert = document.getElementById("auth-alert");
+    const serviceSelect = document.getElementById("order-service");
+    const summaryTitle = document.getElementById("summary-title");
+    const summaryPrice = document.getElementById("summary-price");
+
+    // Track active user
+    onAuthStateChanged(auth, (user) => {
+      currentUser = user;
+      if (user) {
+        authAlert.style.display = "none";
+        authNav.innerHTML = `
+          <button id="logout-btn" class="btn-nav" style="cursor: pointer;">
+            Sign Out (${user.displayName || user.email.split('@')[0]})
+          </button>
+        `;
+        document.getElementById("logout-btn").addEventListener("click", () => signOut(auth));
+      } else {
+        authAlert.style.display = "block";
+        authNav.innerHTML = `<a href="login.html" class="btn-nav">Sign In</a>`;
+      }
+    });
+
+    // Parse URL Query parameters (e.g. payment.html?plan=bot-security)
+    const urlParams = new URLSearchParams(window.location.search);
+    const preselectedPlan = urlParams.get('plan');
+    if (preselectedPlan) {
+      for (let option of serviceSelect.options) {
+        if (option.value === preselectedPlan) {
+          serviceSelect.value = preselectedPlan;
+          break;
+        }
+      }
+    }
+
+    function updateSummary() {
+      const selectedOption = serviceSelect.options[serviceSelect.selectedIndex];
+      const price = selectedOption.getAttribute('data-price');
+      summaryTitle.innerText = selectedOption.text.split('—')[0].trim();
+      summaryPrice.innerText = `$${price} USD`;
+    }
+    serviceSelect.addEventListener('change', updateSummary);
+    updateSummary();
+
+    // Payment method selector
+    let selectedPaymentMethod = "bKash / Nagad";
+    const methodCards = document.querySelectorAll('.pay-method-card');
+    methodCards.forEach(card => {
+      card.addEventListener('click', () => {
+        methodCards.forEach(c => c.classList.remove('active'));
+        card.classList.add('active');
+        selectedPaymentMethod = card.getAttribute('data-method');
+      });
+    });
+
+    // Handle Form Submit
+    const orderForm = document.getElementById('order-form');
+    orderForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      if (!currentUser) {
+        alert("Please sign in or create an account to submit your order.");
+        window.location.href = "login.html";
+        return;
+      }
+
+      const selectedOption = serviceSelect.options[serviceSelect.selectedIndex];
+      const planName = selectedOption.text.split('—')[0].trim();
+      const planPrice = selectedOption.getAttribute('data-price');
+      const discordHandle = document.getElementById('contact-discord').value.trim();
+      const notes = document.getElementById('project-notes').value.trim();
+
+      const btn = document.getElementById('submit-order-btn');
+      btn.disabled = true;
+      btn.innerText = "Processing Order...";
+
+      try {
+        await addDoc(collection(db, "orders"), {
+          userId: currentUser.uid,
+          userEmail: currentUser.email,
+          servicePlan: planName,
+          priceUSD: planPrice,
+          paymentMethod: selectedPaymentMethod,
+          discordHandle: discordHandle || "N/A",
+          notes: notes || "No additional notes provided.",
+          status: "pending_payment",
+          createdAt: serverTimestamp()
+        });
+
+        alert("Order submitted successfully! Our team will contact you shortly to complete verification.");
+        window.location.href = "index.html";
+      } catch (err) {
+        console.error(err);
+        alert("Failed to submit order: " + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerText = "Confirm & Request Invoice";
+      }
+    });
+  </script>
+
+  <!-- Background animation scripts -->
+  <script>
+    const canvas = document.getElementById('bg-canvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+    function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    class Particle {
+      constructor() { this.reset(); }
+      reset() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.size = Math.random() * 1.8 + 0.4;
+        this.speedX = (Math.random() - 0.5) * 0.4;
+        this.speedY = (Math.random() - 0.5) * 0.4;
+        this.alpha = Math.random() * 0.5 + 0.1;
+      }
+      update() {
+        this.x += this.speedX; this.y += this.speedY;
+        if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) this.reset();
+      }
+      draw() {
+        ctx.fillStyle = `rgba(129, 140, 248, ${this.alpha})`;
+        ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+    for (let i = 0; i < 60; i++) particles.push(new Particle());
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(p => { p.update(); p.draw(); });
+      requestAnimationFrame(animate);
+    }
+    animate();
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('active'); });
+    }, { threshold: 0.15 });
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+  </script>
+</body>
+</html>
