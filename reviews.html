@@ -22,7 +22,7 @@
       <li><a href="web_service.html">Websites</a></li>
       <li><a href="discord_service.html">Discord Bots</a></li>
       <li><a href="reviews.html" class="active">Reviews</a></li>
-      <li id="user-nav-action"><a href="login.html" class="btn-nav">Sign In</a></li>
+      <li class="auth-nav-slot"><button class="btn-nav">Sign In</button></li>
     </ul>
   </nav>
 
@@ -34,13 +34,12 @@
     </section>
 
     <section class="container reveal">
-      <!-- Submission Form (Visible only when logged in or prompts login) -->
       <div class="form-box">
         <h3 style="margin-bottom: 0.5rem; font-size: 1.3rem;">Leave a Review</h3>
         <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1.25rem;">Share feedback on your website or Discord bot build.</p>
         
-        <div id="auth-alert" style="display: none; padding: 0.8rem; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; color: #fca5a5; font-size: 0.85rem; margin-bottom: 1rem;">
-          You must be logged in to submit a review. <a href="login.html" style="color: #fff; text-decoration: underline;">Sign In here</a>.
+        <div id="auth-alert" style="display: none; padding: 0.8rem; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; color: #fca5a5; font-size: 0.85rem; margin-bottom: 1rem; cursor: pointer;">
+          You must be logged in to submit a review. <span style="color: #fff; text-decoration: underline;">Click here to Sign In</span>.
         </div>
 
         <form id="review-form">
@@ -62,7 +61,6 @@
         </form>
       </div>
 
-      <!-- Realtime Reviews Feed -->
       <div class="section-title" style="margin-top: 4rem;">
         <h2>All Reviews</h2>
         <div id="loading-spinner" style="color: var(--text-muted); font-size: 0.9rem; margin-top: 1rem;">Loading verified reviews...</div>
@@ -75,122 +73,81 @@
     <p>&copy; 2026 Innovexa Studio. All rights reserved.</p>
   </footer>
 
-  <!-- Firebase Modular Setup Script -->
+  <script src="app.js"></script>
+  <script type="module" src="auth-modal.js"></script>
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
-    import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
-
-    // -------------------------------------------------------------
-    // REPLACE WITH YOUR FIREBASE PROJECT CONFIGURATION DETAILS
-    // -------------------------------------------------------------
-    const firebaseConfig = {
-      apiKey: "YOUR_FIREBASE_API_KEY",
-      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_PROJECT_ID.appspot.com",
-      messagingSenderId: "YOUR_SENDER_ID",
-      appId: "YOUR_APP_ID"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+    import { auth, db } from "./firebase-config.js";
+    import { collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+    import { openAuthModal } from "./auth-modal.js";
 
     let currentUser = null;
-    const authNav = document.getElementById("user-nav-action");
     const authAlert = document.getElementById("auth-alert");
     const reviewForm = document.getElementById("review-form");
     const reviewsContainer = document.getElementById("reviews-container");
     const loadingSpinner = document.getElementById("loading-spinner");
 
-    // Track Authentication Status
-    onAuthStateChanged(auth, (user) => {
-      currentUser = user;
-      if (user) {
-        authAlert.style.display = "none";
-        authNav.innerHTML = `
-          <button id="logout-btn" class="btn-nav" style="cursor: pointer;">
-            Sign Out (${user.displayName || user.email.split('@')[0]})
-          </button>
-        `;
-        document.getElementById("logout-btn").addEventListener("click", () => signOut(auth));
-      } else {
-        authAlert.style.display = "block";
-        authNav.innerHTML = `<a href="login.html" class="btn-nav">Sign In</a>`;
-      }
+    window.addEventListener('auth-changed', (e) => {
+      currentUser = e.detail.user;
+      authAlert.style.display = currentUser ? "none" : "block";
     });
 
-    // Handle Form Submit
+    authAlert.onclick = () => openAuthModal(false);
+
     reviewForm.addEventListener("submit", async (e) => {
       e.preventDefault();
       if (!currentUser) {
-        alert("Please log in before posting a review.");
-        window.location.href = "login.html";
+        openAuthModal(false);
         return;
       }
 
       const rating = parseInt(document.getElementById("review-rating").value);
       const comment = document.getElementById("review-comment").value.trim();
-
-      if (!comment) return;
-
       const btn = document.getElementById("submit-review-btn");
-      btn.innerText = "Posting...";
+
       btn.disabled = true;
+      btn.innerText = "Posting...";
 
       try {
         await addDoc(collection(db, "reviews"), {
           authorName: currentUser.displayName || currentUser.email.split('@')[0],
           userId: currentUser.uid,
-          rating: rating,
-          comment: comment,
+          rating,
+          comment,
           createdAt: serverTimestamp()
         });
         reviewForm.reset();
       } catch (err) {
-        console.error(err);
-        alert("Failed to post review: " + err.message);
+        alert("Error: " + err.message);
       } finally {
-        btn.innerText = "Post Review";
         btn.disabled = false;
+        btn.innerText = "Post Review";
       }
     });
 
-    // Realtime Listener for Reviews
-    const reviewsRef = collection(db, "reviews");
-    const q = query(reviewsRef, orderBy("createdAt", "desc"));
-
-    onSnapshot(q, (snapshot) => {
+    const q = query(collection(db, "reviews"), orderBy("createdAt", "desc"));
+    onSnapshot(q, (snap) => {
       loadingSpinner.style.display = "none";
-      reviewsContainer.innerHTML = "";
+      reviewsContainer.innerHTML = snap.empty 
+        ? `<p style="grid-column:1/-1; text-align:center; color:var(--text-muted);">No reviews yet. Be the first to leave one!</p>` 
+        : "";
 
-      if (snapshot.empty) {
-        reviewsContainer.innerHTML = `<p style="grid-column: 1/-1; text-align: center; color: var(--text-muted);">No reviews posted yet. Be the first to leave one!</p>`;
-        return;
-      }
-
-      snapshot.forEach((doc) => {
-        const data = doc.data();
-        const stars = "★".repeat(data.rating) + "☆".repeat(5 - data.rating);
-        const card = document.createElement("div");
-        card.className = "review-card reveal active";
-        
-        const dateString = data.createdAt ? new Date(data.createdAt.toDate()).toLocaleDateString() : "Just now";
-
-        card.innerHTML = `
-          <div class="review-header">
-            <span class="reviewer-name">${data.authorName || 'Verified Client'}</span>
-            <span class="review-stars">${stars}</span>
+      snap.forEach(doc => {
+        const d = doc.data();
+        const stars = "★".repeat(d.rating) + "☆".repeat(5 - d.rating);
+        const date = d.createdAt ? new Date(d.createdAt.toDate()).toLocaleDateString() : "Just now";
+        reviewsContainer.insertAdjacentHTML('beforeend', `
+          <div class="review-card reveal active">
+            <div class="review-header">
+              <span class="reviewer-name">${d.authorName}</span>
+              <span class="review-stars">${stars}</span>
+            </div>
+            <p class="review-text">${escapeHtml(d.comment)}</p>
+            <div class="review-date">${date}</div>
           </div>
-          <p class="review-text">${escapeHtml(data.comment)}</p>
-          <div class="review-date">${dateString}</div>
-        `;
-        reviewsContainer.appendChild(card);
+        `);
       });
     }, (error) => {
-      loadingSpinner.innerText = "Error loading reviews from database. Check Firebase config.";
-      console.error(error);
+      loadingSpinner.innerText = "Error loading reviews. Check Firestore rules.";
     });
 
     function escapeHtml(string) {
@@ -198,48 +155,6 @@
       div.innerText = string;
       return div.innerHTML;
     }
-  </script>
-
-  <script>
-    // Particle Canvas Animation
-    const canvas = document.getElementById('bg-canvas');
-    const ctx = canvas.getContext('2d');
-    let particles = [];
-    function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
-
-    class Particle {
-      constructor() { this.reset(); }
-      reset() {
-        this.x = Math.random() * canvas.width;
-        this.y = Math.random() * canvas.height;
-        this.size = Math.random() * 1.8 + 0.4;
-        this.speedX = (Math.random() - 0.5) * 0.4;
-        this.speedY = (Math.random() - 0.5) * 0.4;
-        this.alpha = Math.random() * 0.5 + 0.1;
-      }
-      update() {
-        this.x += this.speedX; this.y += this.speedY;
-        if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) this.reset();
-      }
-      draw() {
-        ctx.fillStyle = `rgba(129, 140, 248, ${this.alpha})`;
-        ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill();
-      }
-    }
-    for (let i = 0; i < 60; i++) particles.push(new Particle());
-    function animate() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      particles.forEach(p => { p.update(); p.draw(); });
-      requestAnimationFrame(animate);
-    }
-    animate();
-
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('active'); });
-    }, { threshold: 0.15 });
-    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
   </script>
 </body>
 </html>
