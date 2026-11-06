@@ -87,7 +87,6 @@
   <canvas id="bg-canvas"></canvas>
   <div class="ambient-glow"></div>
 
-  <!-- Navigation -->
   <nav class="navbar">
     <a href="index.html" class="nav-brand">
       <span class="brand-dot"></span>Innovexa Studio
@@ -97,7 +96,7 @@
       <li><a href="web_service.html">Websites</a></li>
       <li><a href="discord_service.html">Discord Bots</a></li>
       <li><a href="reviews.html">Reviews</a></li>
-      <li id="auth-nav-item"><a href="login.html" class="btn-nav">Sign In</a></li>
+      <li class="auth-nav-slot"><button class="btn-nav">Sign In</button></li>
     </ul>
   </nav>
 
@@ -110,15 +109,14 @@
 
     <div class="container reveal">
       <div class="payment-layout">
-        <!-- Order & User Info Form -->
         <div class="card" style="padding: 2.2rem;">
           <h2 style="font-size: 1.4rem; margin-bottom: 0.5rem;">Client & Project Details</h2>
           <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1.8rem;">
             Enter your Discord username or contact details so we can deliver your files or invite link.
           </p>
 
-          <div id="auth-alert" style="display: none; padding: 0.8rem; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; color: #fca5a5; font-size: 0.85rem; margin-bottom: 1.2rem;">
-            Please <a href="login.html" style="color: #fff; text-decoration: underline;">sign in</a> to associate this purchase with your account.
+          <div id="auth-alert" style="display: none; padding: 0.8rem; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; color: #fca5a5; font-size: 0.85rem; margin-bottom: 1.2rem; cursor: pointer;">
+            Please <span style="color: #fff; text-decoration: underline;">click here to sign in</span> to attach this order to your account.
           </div>
 
           <form id="order-form">
@@ -166,7 +164,6 @@
           </form>
         </div>
 
-        <!-- Sticky Summary Box -->
         <div class="order-summary-box">
           <h3 style="font-size: 1.25rem; margin-bottom: 1.25rem;">Order Summary</h3>
           <div class="summary-line">
@@ -201,168 +198,83 @@
     <p>&copy; 2026 Innovexa Studio. All rights reserved.</p>
   </footer>
 
-  <!-- Firebase Script for Order Handling -->
+  <script src="app.js"></script>
+  <script type="module" src="auth-modal.js"></script>
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
-    import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
-
-    // REPLACE WITH YOUR FIREBASE CONFIG
-    const firebaseConfig = {
-      apiKey: "YOUR_FIREBASE_API_KEY",
-      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_PROJECT_ID.appspot.com",
-      messagingSenderId: "YOUR_SENDER_ID",
-      appId: "YOUR_APP_ID"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+    import { auth, db } from "./firebase-config.js";
+    import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+    import { openAuthModal } from "./auth-modal.js";
 
     let currentUser = null;
-    const authNav = document.getElementById("auth-nav-item");
     const authAlert = document.getElementById("auth-alert");
     const serviceSelect = document.getElementById("order-service");
     const summaryTitle = document.getElementById("summary-title");
     const summaryPrice = document.getElementById("summary-price");
 
-    // Track active user
-    onAuthStateChanged(auth, (user) => {
-      currentUser = user;
-      if (user) {
-        authAlert.style.display = "none";
-        authNav.innerHTML = `
-          <button id="logout-btn" class="btn-nav" style="cursor: pointer;">
-            Sign Out (${user.displayName || user.email.split('@')[0]})
-          </button>
-        `;
-        document.getElementById("logout-btn").addEventListener("click", () => signOut(auth));
-      } else {
-        authAlert.style.display = "block";
-        authNav.innerHTML = `<a href="login.html" class="btn-nav">Sign In</a>`;
-      }
+    window.addEventListener('auth-changed', (e) => {
+      currentUser = e.detail.user;
+      authAlert.style.display = currentUser ? "none" : "block";
     });
 
-    // Parse URL Query parameters (e.g. payment.html?plan=bot-security)
-    const urlParams = new URLSearchParams(window.location.search);
-    const preselectedPlan = urlParams.get('plan');
+    authAlert.onclick = () => openAuthModal(false);
+
+    const preselectedPlan = new URLSearchParams(window.location.search).get('plan');
     if (preselectedPlan) {
-      for (let option of serviceSelect.options) {
-        if (option.value === preselectedPlan) {
-          serviceSelect.value = preselectedPlan;
-          break;
-        }
+      for (let opt of serviceSelect.options) {
+        if (opt.value === preselectedPlan) { serviceSelect.value = preselectedPlan; break; }
       }
     }
 
     function updateSummary() {
-      const selectedOption = serviceSelect.options[serviceSelect.selectedIndex];
-      const price = selectedOption.getAttribute('data-price');
-      summaryTitle.innerText = selectedOption.text.split('—')[0].trim();
-      summaryPrice.innerText = `$${price} USD`;
+      const opt = serviceSelect.options[serviceSelect.selectedIndex];
+      summaryTitle.innerText = opt.text.split('—')[0].trim();
+      summaryPrice.innerText = `$${opt.getAttribute('data-price')} USD`;
     }
-    serviceSelect.addEventListener('change', updateSummary);
+    serviceSelect.onchange = updateSummary;
     updateSummary();
 
-    // Payment method selector
-    let selectedPaymentMethod = "bKash / Nagad";
-    const methodCards = document.querySelectorAll('.pay-method-card');
-    methodCards.forEach(card => {
-      card.addEventListener('click', () => {
-        methodCards.forEach(c => c.classList.remove('active'));
+    let selectedMethod = "bKash / Nagad";
+    document.querySelectorAll('.pay-method-card').forEach(card => {
+      card.onclick = () => {
+        document.querySelectorAll('.pay-method-card').forEach(c => c.classList.remove('active'));
         card.classList.add('active');
-        selectedPaymentMethod = card.getAttribute('data-method');
-      });
+        selectedMethod = card.getAttribute('data-method');
+      };
     });
 
-    // Handle Form Submit
-    const orderForm = document.getElementById('order-form');
-    orderForm.addEventListener('submit', async (e) => {
+    document.getElementById('order-form').onsubmit = async (e) => {
       e.preventDefault();
-
       if (!currentUser) {
-        alert("Please sign in or create an account to submit your order.");
-        window.location.href = "login.html";
+        openAuthModal(false);
         return;
       }
 
-      const selectedOption = serviceSelect.options[serviceSelect.selectedIndex];
-      const planName = selectedOption.text.split('—')[0].trim();
-      const planPrice = selectedOption.getAttribute('data-price');
-      const discordHandle = document.getElementById('contact-discord').value.trim();
-      const notes = document.getElementById('project-notes').value.trim();
-
+      const opt = serviceSelect.options[serviceSelect.selectedIndex];
       const btn = document.getElementById('submit-order-btn');
       btn.disabled = true;
-      btn.innerText = "Processing Order...";
+      btn.innerText = "Submitting Order...";
 
       try {
         await addDoc(collection(db, "orders"), {
           userId: currentUser.uid,
           userEmail: currentUser.email,
-          servicePlan: planName,
-          priceUSD: planPrice,
-          paymentMethod: selectedPaymentMethod,
-          discordHandle: discordHandle || "N/A",
-          notes: notes || "No additional notes provided.",
+          servicePlan: opt.text.split('—')[0].trim(),
+          priceUSD: opt.getAttribute('data-price'),
+          paymentMethod: selectedMethod,
+          discordHandle: document.getElementById('contact-discord').value.trim() || "N/A",
+          notes: document.getElementById('project-notes').value.trim() || "None",
           status: "pending_payment",
           createdAt: serverTimestamp()
         });
-
-        alert("Order submitted successfully! Our team will contact you shortly to complete verification.");
+        alert("Order placed successfully! We will reach out shortly.");
         window.location.href = "index.html";
       } catch (err) {
-        console.error(err);
-        alert("Failed to submit order: " + err.message);
+        alert("Error: " + err.message);
       } finally {
         btn.disabled = false;
         btn.innerText = "Confirm & Request Invoice";
       }
-    });
-  </script>
-
-  <!-- Background animation scripts -->
-  <script>
-    const canvas = document.getElementById('bg-canvas');
-    const ctx = canvas.getContext('2d');
-    let particles = [];
-    function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
-
-    class Particle {
-      constructor() { this.reset(); }
-      reset() {
-        this.x = Math.random() * canvas.width;
-        this.y = Math.random() * canvas.height;
-        this.size = Math.random() * 1.8 + 0.4;
-        this.speedX = (Math.random() - 0.5) * 0.4;
-        this.speedY = (Math.random() - 0.5) * 0.4;
-        this.alpha = Math.random() * 0.5 + 0.1;
-      }
-      update() {
-        this.x += this.speedX; this.y += this.speedY;
-        if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) this.reset();
-      }
-      draw() {
-        ctx.fillStyle = `rgba(129, 140, 248, ${this.alpha})`;
-        ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill();
-      }
-    }
-    for (let i = 0; i < 60; i++) particles.push(new Particle());
-    function animate() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      particles.forEach(p => { p.update(); p.draw(); });
-      requestAnimationFrame(animate);
-    }
-    animate();
-
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('active'); });
-    }, { threshold: 0.15 });
-    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+    };
   </script>
 </body>
 </html>
