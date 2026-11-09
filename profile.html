@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Innovexa Studio | Client Dashboard & Orders</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    .order-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1.5rem;
+    }
+    .order-table th, .order-table td {
+      padding: 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--card-border);
+      font-size: 0.9rem;
+    }
+    .order-table th {
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      font-size: 0.78rem;
+      letter-spacing: 0.5px;
+    }
+    .status-pill {
+      display: inline-block;
+      padding: 0.25rem 0.65rem;
+      border-radius: 99px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .status-pending { background: rgba(251, 191, 36, 0.15); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.3); }
+    .status-progress { background: rgba(56, 189, 248, 0.15); color: var(--accent-cyan); border: 1px solid rgba(56, 189, 248, 0.3); }
+    .status-completed { background: rgba(52, 211, 153, 0.15); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.3); }
+  </style>
+</head>
+<body>
+  <div id="preloader"><div class="loader-content"><div class="loader-ring"></div></div></div>
+  <div id="cursor-glow"></div>
+  <canvas id="bg-canvas"></canvas>
+  <div class="ambient-glow"></div>
+
+  <nav class="navbar">
+    <a href="index.html" class="nav-brand"><span class="brand-dot"></span>Innovexa Studio</a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="web_service.html">Websites</a></li>
+      <li><a href="discord_service.html">Discord Bots</a></li>
+      <li><a href="reviews.html">Reviews</a></li>
+      <li class="auth-nav-slot"><button class="btn-nav">Sign In</button></li>
+    </ul>
+  </nav>
+
+  <main>
+    <section class="container reveal">
+      <div class="card" style="margin-bottom: 2rem;">
+        <h2 id="profile-greeting" style="font-size: 1.6rem; margin-bottom: 0.3rem;">Client Dashboard</h2>
+        <p id="profile-email" style="color: var(--text-muted); font-size: 0.9rem;">Connecting account...</p>
+      </div>
+
+      <div class="card" style="padding: 2rem;">
+        <h3 style="font-size: 1.3rem; margin-bottom: 0.5rem;">Your Order History & Invoices</h3>
+        <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1.5rem;">Click any invoice to view detailed specifications and print your copy.</p>
+
+        <div id="orders-loading" style="color: var(--text-muted); font-size: 0.9rem;">Loading past orders...</div>
+        <div id="orders-empty" style="display:none; text-align:center; padding: 3rem 1rem; color: var(--text-muted);">
+          You haven't placed any orders yet.<br>
+          <a href="web_service.html" class="btn btn-primary" style="margin-top: 1rem;">Explore Services</a>
+        </div>
+
+        <div style="overflow-x: auto;">
+          <table class="order-table" id="orders-table" style="display:none;">
+            <thead>
+              <tr>
+                <th>Invoice #</th>
+                <th>Services</th>
+                <th>Total</th>
+                <th>Payment</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="orders-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Interactive Invoice Modal -->
+  <div id="invoice-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); backdrop-filter:blur(8px); z-index:99999; align-items:center; justify-content:center; padding:1rem;">
+    <div class="form-box" style="width:100%; max-width:540px; background:#0f111a; border:1px solid rgba(255,255,255,0.12); position:relative;">
+      <button id="invoice-close-btn" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:var(--text-muted); font-size:1.5rem; cursor:pointer;">&times;</button>
+      <div id="invoice-modal-content"></div>
+      <button onclick="window.print()" class="btn btn-secondary" style="width:100%; margin-top:1.5rem;">🖨️ Print / Save as PDF</button>
+    </div>
+  </div>
+
+  <footer><p>&copy; 2026 Innovexa Studio. All rights reserved.</p></footer>
+
+  <script src="app.js"></script>
+  <script type="module" src="cart.js"></script>
+  <script type="module" src="auth-modal.js"></script>
+  <script type="module">
+    import { auth, db } from "./firebase-config.js";
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
+    import { collection, query, where, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+    import { openAuthModal } from "./auth-modal.js";
+
+    const greeting = document.getElementById("profile-greeting");
+    const emailEl = document.getElementById("profile-email");
+    const loadingEl = document.getElementById("orders-loading");
+    const emptyEl = document.getElementById("orders-empty");
+    const tableEl = document.getElementById("orders-table");
+    const tbody = document.getElementById("orders-tbody");
+    const invoiceModal = document.getElementById("invoice-modal");
+    const invoiceContent = document.getElementById("invoice-modal-content");
+    document.getElementById("invoice-close-btn").onclick = () => invoiceModal.style.display = "none";
+
+    let fetchedOrders = [];
+
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        greeting.innerText = "Please Sign In";
+        emailEl.innerText = "Sign in to view your orders and invoices.";
+        loadingEl.style.display = "none";
+        emptyEl.style.display = "block";
+        openAuthModal(false);
+        return;
+      }
+
+      greeting.innerText = `Welcome, ${user.displayName || user.email.split('@')[0]}`;
+      emailEl.innerText = user.email;
+
+      // Query client's orders from Firestore
+      const q = query(
+        collection(db, "orders"),
+        where("userId", "==", user.uid)
+      );
+
+      onSnapshot(q, (snapshot) => {
+        loadingEl.style.display = "none";
+        if (snapshot.empty) {
+          emptyEl.style.display = "block";
+          tableEl.style.display = "none";
+          return;
+        }
+
+        emptyEl.style.display = "none";
+        tableEl.style.display = "table";
+        fetchedOrders = [];
+
+        tbody.innerHTML = "";
+        snapshot.forEach(doc => {
+          const order = { id: doc.id, ...doc.data() };
+          fetchedOrders.push(order);
+
+          const itemsText = (order.items && order.items.length) 
+            ? order.items.map(i => i.name).join(", ") 
+            : (order.servicePlan || "Custom Package");
+
+          const statusClass = order.status === "Completed" ? "status-completed" : (order.status === "In Progress" ? "status-progress" : "status-pending");
+
+          tbody.insertAdjacentHTML("beforeend", `
+            <tr>
+              <td style="color:var(--accent-cyan); font-weight:600;">${order.invoiceNumber || "N/A"}</td>
+              <td style="color:#fff; max-width:240px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${itemsText}</td>
+              <td style="color:#fff; font-weight:600;">৳${(order.totalBDT || order.priceUSD || 0).toLocaleString()} BDT</td>
+              <td style="color:var(--text-muted);">${order.paymentMethod || "bKash"}</td>
+              <td><span class="status-pill ${statusClass}">${order.status || "Pending"}</span></td>
+              <td><button class="btn btn-secondary view-inv-btn" data-id="${order.id}" style="padding:0.35rem 0.8rem; font-size:0.78rem;">View Invoice</button></td>
+            </tr>
+          `);
+        });
+
+        tbody.querySelectorAll(".view-inv-btn").forEach(btn => {
+          btn.onclick = () => {
+            const ord = fetchedOrders.find(o => o.id === btn.getAttribute("data-id"));
+            if (ord) showInvoiceModal(ord);
+          };
+        });
+      });
+    });
+
+    function showInvoiceModal(order) {
+      invoiceContent.innerHTML = `
+        <div style="border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:1rem; margin-bottom:1rem;">
+          <h2 style="font-size:1.4rem; color:#fff; display:flex; align-items:center; gap:8px;">
+            <span class="brand-dot"></span> Innovexa Studio
+          </h2>
+          <div style="color:var(--text-muted); font-size:0.8rem; margin-top:4px;">Digital Solutions & Discord Bot Engineering</div>
+        </div>
+        <div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:1rem;">
+          <div>
+            <div style="color:var(--text-muted);">Billed To:</div>
+            <div style="font-weight:600; color:#fff;">${order.userName || "Valued Client"}</div>
+            <div style="color:var(--text-muted);">${order.userEmail}</div>
+            <div style="color:var(--text-muted);">Discord: ${order.discordHandle || "N/A"}</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="color:var(--text-muted);">Invoice Number:</div>
+            <div style="font-weight:700; color:var(--accent-cyan); font-size:1rem;">${order.invoiceNumber || "N/A"}</div>
+            <div style="color:var(--text-muted); margin-top:4px;">Status: <span style="color:#fff;">${order.status || "Pending"}</span></div>
+          </div>
+        </div>
+        <div style="margin:1rem 0; padding:1rem; background:rgba(255,255,255,0.03); border-radius:10px; border:1px solid rgba(255,255,255,0.06);">
+          ${(order.items && order.items.length) ? order.items.map(i => `
+            <div style="display:flex; justify-content:space-between; margin-bottom:0.4rem; font-size:0.88rem; color:#fff;">
+              <span>${i.name} &times; ${i.quantity || 1}</span>
+              <span style="font-weight:600;">৳${(i.price * (i.quantity || 1)).toLocaleString()} BDT</span>
+            </div>
+          `).join("") : `<div style="display:flex; justify-content:space-between; color:#fff;"><span>${order.servicePlan}</span><span>৳${order.priceUSD}</span></div>`}
+          <div style="border-top:1px solid rgba(255,255,255,0.1); margin-top:0.6rem; padding-top:0.6rem; display:flex; justify-content:space-between; font-weight:700; color:var(--accent-cyan); font-size:1.1rem;">
+            <span>Total Payable:</span>
+            <span>৳${(order.totalBDT || order.priceUSD || 0).toLocaleString()} BDT</span>
+          </div>
+        </div>
+      `;
+      invoiceModal.style.display = "flex";
+    }
+  </script>
+</body>
+</html>
