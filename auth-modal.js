@@ -113,7 +113,7 @@ googleBtn.onclick = async () => {
     googleBtn.style.opacity = '0.7';
     googleBtn.innerText = 'Connecting Google...';
     await signInWithPopup(auth, googleProvider);
-    recordLoginSession(); // Enforces 2-3 week session persistence
+    recordLoginSession();
     closeAuthModal();
   } catch (err) {
     showError(err.message);
@@ -148,7 +148,7 @@ emailForm.onsubmit = async (e) => {
     } else {
       await signInWithEmailAndPassword(auth, email, pass);
     }
-    recordLoginSession(); // Enforces 2-3 week session persistence
+    recordLoginSession();
     closeAuthModal();
   } catch (err) {
     showError(err.message);
@@ -166,7 +166,7 @@ function showError(msg) {
   modalMsg.innerText = msg;
 }
 
-// 3. Global Navbar Sync & 2-3 Week Session Verification
+// 3. Global Navbar Sync with Profile / Orders access
 onAuthStateChanged(auth, (user) => {
   if (user) {
     if (checkSessionExpiry()) {
@@ -176,9 +176,12 @@ onAuthStateChanged(auth, (user) => {
     const displayName = user.displayName || user.email.split('@')[0];
     document.querySelectorAll('.auth-nav-slot').forEach(slot => {
       slot.innerHTML = `
-        <button class="btn-nav" id="global-logout-btn" style="cursor:pointer;">
-          Sign Out (${displayName})
-        </button>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <a href="profile.html" class="btn-nav" style="text-decoration:none;">Orders</a>
+          <button class="btn-nav" id="global-logout-btn" style="cursor:pointer; opacity:0.85;">
+            Sign Out (${displayName})
+          </button>
+        </div>
       `;
       slot.querySelector('#global-logout-btn').onclick = () => {
         localStorage.removeItem('innovexa_login_timestamp');
