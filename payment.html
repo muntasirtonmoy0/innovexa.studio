@@ -8,13 +8,14 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
   <style>
     .payment-layout {
       display: grid;
-      grid-template-columns: 1.1fr 0.9fr;
+      grid-template-columns: 1.15fr 0.85fr;
       gap: 2rem;
       align-items: start;
-      max-width: 1000px;
+      max-width: 1040px;
       margin: 2rem auto;
     }
 
@@ -77,36 +78,28 @@
     }
 
     @media (max-width: 820px) {
-      .payment-layout {
-        grid-template-columns: 1fr;
-      }
+      .payment-layout { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
   <!-- High-Tech Preloader -->
-<div id="preloader">
-  <div class="loader-content">
-    <div class="loader-ring"></div>
-    <div class="loader-brand">
-      <span class="brand-dot"></span>Innovexa Studio
-    </div>
-    <div class="loader-bar-wrap">
-      <div class="loader-bar-fill"></div>
+  <div id="preloader">
+    <div class="loader-content">
+      <div class="loader-ring"></div>
+      <div class="loader-brand"><span class="brand-dot"></span>Innovexa Studio</div>
+      <div class="loader-bar-wrap"><div class="loader-bar-fill"></div></div>
     </div>
   </div>
-</div>
 
-<!-- Cursor Glow Light (Follows Mouse) -->
-<div id="cursor-glow"></div>
+  <!-- Cursor Glow -->
+  <div id="cursor-glow"></div>
   
   <canvas id="bg-canvas"></canvas>
   <div class="ambient-glow"></div>
 
   <nav class="navbar">
-    <a href="index.html" class="nav-brand">
-      <span class="brand-dot"></span>Innovexa Studio
-    </a>
+    <a href="index.html" class="nav-brand"><span class="brand-dot"></span>Innovexa Studio</a>
     <ul class="nav-links">
       <li><a href="index.html">Home</a></li>
       <li><a href="web_service.html">Websites</a></li>
@@ -117,30 +110,35 @@
   </nav>
 
   <main>
-    <section class="hero reveal" style="min-height: 25vh; padding-top: 2rem; padding-bottom: 1rem;">
+    <section class="hero reveal" style="min-height: 22vh; padding-top: 1.5rem; padding-bottom: 0.5rem;">
       <div class="badge">Direct Checkout</div>
       <h1>Order <span class="gradient-text">Configuration</span></h1>
-      <p>Confirm your service specifications and initiate development setup.</p>
+      <p>Confirm your service specifications, invoice number, and initiate development setup.</p>
     </section>
 
     <div class="container reveal">
       <div class="payment-layout">
-        <!-- Order & User Info Form -->
         <div class="card" style="padding: 2.2rem;">
-          <h2 style="font-size: 1.4rem; margin-bottom: 0.5rem;">Client & Project Details</h2>
-          <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1.8rem;">
-            Enter your Discord username or contact details so we can deliver your files or invite link.
+          <h2 style="font-size: 1.35rem; margin-bottom: 0.4rem;">Client & Payment Setup</h2>
+          <p style="font-size: 0.86rem; color: var(--text-muted); margin-bottom: 1.5rem;">
+            Enter your Discord username or contact details so we can deliver your project files and setup access.
           </p>
 
           <div id="auth-alert" style="display: none; padding: 0.8rem; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; color: #fca5a5; font-size: 0.85rem; margin-bottom: 1.2rem; cursor: pointer;">
-            Please <span style="color: #fff; text-decoration: underline;">click here to sign in</span> to attach this order to your account.
+            Please <span style="color: #fff; text-decoration: underline;">click here to sign in</span> to attach this order and invoice to your profile.
           </div>
 
           <form id="order-form">
-            <div class="form-group">
-              <label for="order-service">Selected Package</label>
-              <!-- Options populated automatically from data files -->
+            <!-- Single Service Select (Shown if direct plan checkout) -->
+            <div id="single-service-group" class="form-group">
+              <label for="order-service">Service Selected</label>
               <select id="order-service" class="form-input"></select>
+            </div>
+
+            <!-- Cart Items Summary (Shown if cart has items) -->
+            <div id="cart-items-preview" style="display:none; margin-bottom:1.4rem;">
+              <label style="font-size:0.85rem; font-weight:600; color:var(--text-muted); display:block; margin-bottom:0.5rem;">Shopping Cart Items</label>
+              <div id="cart-items-content" style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:0.85rem 1rem; display:flex; flex-direction:column; gap:6px;"></div>
             </div>
 
             <div class="form-group">
@@ -179,12 +177,16 @@
         <div class="order-summary-box">
           <h3 style="font-size: 1.25rem; margin-bottom: 1.25rem;">Order Summary</h3>
           <div class="summary-line">
-            <span>Service Name</span>
-            <span id="summary-title" style="color: #fff; text-align: right; font-weight: 500;">Landing Page</span>
+            <span>Invoice #</span>
+            <span id="summary-invoice" style="color: var(--accent-cyan); font-weight:600;">Generating...</span>
+          </div>
+          <div class="summary-line">
+            <span>Items Selected</span>
+            <span id="summary-title" style="color: #fff; text-align: right; font-weight: 500;">Loading...</span>
           </div>
           <div class="summary-line">
             <span>Turnaround Time</span>
-            <span style="color: #fff;">2 - 5 Days</span>
+            <span style="color: #fff;">1 - 4 Days</span>
           </div>
           <div class="summary-line">
             <span>Revisions Included</span>
@@ -196,10 +198,10 @@
           </div>
           <div class="summary-line total">
             <span>Total Payable</span>
-            <span id="summary-price" style="color: var(--accent-cyan);">$49 USD</span>
+            <span id="summary-price" style="color: var(--accent-cyan);">৳0 BDT</span>
           </div>
           <p style="font-size: 0.78rem; color: var(--text-muted); margin-top: 1rem; line-height: 1.4;">
-            Once confirmed, our developers will reach out through your dashboard/Discord to begin workspace initialization.
+            Once confirmed, an invoice is generated in your profile and our team will reach out directly.
           </p>
         </div>
       </div>
@@ -211,21 +213,31 @@
   </footer>
 
   <script src="app.js"></script>
+  <script type="module" src="cart.js"></script>
   <script type="module" src="auth-modal.js"></script>
   <script type="module">
     import { auth, db } from "./firebase-config.js";
     import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
     import { openAuthModal } from "./auth-modal.js";
     import { populateServiceDropdown } from "./services.js";
+    import { getCart, getCartTotal, clearCart } from "./cart.js";
 
-    // Build options dynamically from data files
-    populateServiceDropdown("order-service", false);
+    // 1. Initialize EmailJS with your Public Key
+    emailjs.init("YOUR_EMAILJS_PUBLIC_KEY");
+
+    // 2. Generate Unique Invoice Number (INV-2026-XXXXX)
+    const randomCode = Math.floor(10000 + Math.random() * 90000);
+    const invoiceNumber = `INV-2026-${randomCode}`;
+    document.getElementById("summary-invoice").innerText = invoiceNumber;
 
     let currentUser = null;
     const authAlert = document.getElementById("auth-alert");
     const serviceSelect = document.getElementById("order-service");
     const summaryTitle = document.getElementById("summary-title");
     const summaryPrice = document.getElementById("summary-price");
+    const cart = getCart();
+
+    populateServiceDropdown("order-service", false);
 
     window.addEventListener('auth-changed', (e) => {
       currentUser = e.detail.user;
@@ -234,26 +246,45 @@
 
     authAlert.onclick = () => openAuthModal(false);
 
-    // Auto-select package passed from URL query parameter (?plan=...)
-    const urlPlan = new URLSearchParams(window.location.search).get('plan');
-    if (urlPlan) {
-      for (let opt of serviceSelect.options) {
-        if (opt.getAttribute('data-plan') === urlPlan) {
-          serviceSelect.value = opt.value;
-          break;
+    // Check if checking out from Shopping Cart or Direct Plan
+    const isCartCheckout = cart.length > 0;
+
+    if (isCartCheckout) {
+      document.getElementById("single-service-group").style.display = "none";
+      const cartPreview = document.getElementById("cart-items-preview");
+      const cartContent = document.getElementById("cart-items-content");
+      cartPreview.style.display = "block";
+
+      cartContent.innerHTML = cart.map(item => `
+        <div style="display:flex; justify-content:space-between; font-size:0.86rem; color:#fff;">
+          <span>${item.name} (${item.quantity || 1}x)</span>
+          <span style="color:var(--accent-cyan);">৳${(item.price * (item.quantity || 1)).toLocaleString()} BDT</span>
+        </div>
+      `).join("");
+
+      summaryTitle.innerText = `${cart.length} Service(s)`;
+      summaryPrice.innerText = `৳${getCartTotal().toLocaleString()} BDT`;
+    } else {
+      const urlPlan = new URLSearchParams(window.location.search).get('plan');
+      if (urlPlan) {
+        for (let opt of serviceSelect.options) {
+          if (opt.getAttribute('data-plan') === urlPlan) {
+            serviceSelect.value = opt.value;
+            break;
+          }
         }
       }
-    }
 
-    function updateSummary() {
-      const opt = serviceSelect.options[serviceSelect.selectedIndex];
-      if (!opt) return;
-      const price = opt.getAttribute('data-price');
-      summaryTitle.innerText = opt.value;
-      summaryPrice.innerText = `$${price} USD`;
+      function updateSummary() {
+        const opt = serviceSelect.options[serviceSelect.selectedIndex];
+        if (!opt) return;
+        const price = Number(opt.getAttribute('data-price'));
+        summaryTitle.innerText = opt.value;
+        summaryPrice.innerText = `৳${price.toLocaleString()} BDT`;
+      }
+      serviceSelect.onchange = updateSummary;
+      updateSummary();
     }
-    serviceSelect.onchange = updateSummary;
-    updateSummary();
 
     let selectedMethod = "bKash / Nagad";
     document.querySelectorAll('.pay-method-card').forEach(card => {
@@ -271,27 +302,71 @@
         return;
       }
 
-      const opt = serviceSelect.options[serviceSelect.selectedIndex];
       const btn = document.getElementById('submit-order-btn');
       btn.disabled = true;
       btn.innerText = "Submitting Order...";
 
+      let orderItems = [];
+      let payableTotal = 0;
+
+      if (isCartCheckout) {
+        orderItems = cart.map(item => ({
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity || 1
+        }));
+        payableTotal = getCartTotal();
+      } else {
+        const opt = serviceSelect.options[serviceSelect.selectedIndex];
+        orderItems = [{
+          name: opt.value,
+          price: Number(opt.getAttribute('data-price')),
+          quantity: 1
+        }];
+        payableTotal = Number(opt.getAttribute('data-price'));
+      }
+
+      const discordHandle = document.getElementById('contact-discord').value.trim() || "N/A";
+      const notes = document.getElementById('project-notes').value.trim() || "None";
+      const customerName = currentUser.displayName || currentUser.email.split('@')[0];
+
       try {
+        // 1. Save to Cloud Firestore
         await addDoc(collection(db, "orders"), {
+          invoiceNumber: invoiceNumber,
           userId: currentUser.uid,
           userEmail: currentUser.email,
-          servicePlan: opt.value,
-          priceUSD: opt.getAttribute('data-price'),
+          userName: customerName,
+          items: orderItems,
+          totalBDT: payableTotal,
           paymentMethod: selectedMethod,
-          discordHandle: document.getElementById('contact-discord').value.trim() || "N/A",
-          notes: document.getElementById('project-notes').value.trim() || "None",
-          status: "pending_payment",
+          discordHandle: discordHandle,
+          notes: notes,
+          status: "Pending",
           createdAt: serverTimestamp()
         });
-        alert("Order received! We will reach out to verify and deliver your service.");
-        window.location.href = "index.html";
+
+        // 2. Dispatch Email via EmailJS using Template ID k6vtwwo
+        const emailParams = {
+          invoice_number: invoiceNumber,
+          customer_name: customerName,
+          customer_email: currentUser.email,
+          discord_handle: discordHandle,
+          payment_method: selectedMethod,
+          total_amount: `৳${payableTotal.toLocaleString()} BDT`,
+          order_items: orderItems.map(i => `- ${i.name} (${i.quantity}x) = ৳${(i.price * i.quantity).toLocaleString()} BDT`).join("\n"),
+          project_notes: notes
+        };
+
+        await emailjs.send("YOUR_SERVICE_ID", "k6vtwwo", emailParams);
+
+        if (isCartCheckout) clearCart();
+        alert(`Order confirmed! Your Invoice #${invoiceNumber} is created.`);
+        window.location.href = "profile.html";
       } catch (err) {
-        alert("Error: " + err.message);
+        console.error("Order completion error:", err);
+        if (isCartCheckout) clearCart();
+        window.location.href = "profile.html";
       } finally {
         btn.disabled = false;
         btn.innerText = "Confirm & Request Invoice";
