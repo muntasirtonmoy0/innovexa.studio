@@ -8,7 +8,7 @@ import {
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDDLrmTZX27sLH-YguBR7HoezeIZF_Fno0",
+  apiKey: "AIzaSyDDLrMTZX27sLH-YguBR7HoezeIZF_Fno0",
   authDomain: "innovexa-studio.firebaseapp.com",
   projectId: "innovexa-studio",
   storageBucket: "innovexa-studio.firebasestorage.app",
