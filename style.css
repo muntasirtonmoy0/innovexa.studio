@@ -39,6 +39,111 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* =========================================================
+   PRELOADER / LOADING SCREEN
+   ========================================================= */
+#preloader {
+  position: fixed;
+  inset: 0;
+  background: #07080c;
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.6s;
+}
+
+#preloader.fade-out {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.loader-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.loader-ring {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  border: 3px solid rgba(56, 189, 248, 0.12);
+  border-top-color: var(--accent-cyan);
+  border-right-color: var(--accent-purple);
+  animation: loader-spin 0.9s cubic-bezier(0.5, 0.1, 0.4, 0.9) infinite;
+  box-shadow: 0 0 20px rgba(56, 189, 248, 0.35);
+}
+
+.loader-brand {
+  font-size: 1.1rem;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: loader-pulse 1.6s ease-in-out infinite;
+}
+
+.loader-bar-wrap {
+  width: 180px;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 99px;
+  overflow: hidden;
+  position: relative;
+}
+
+.loader-bar-fill {
+  width: 45%;
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple));
+  position: absolute;
+  border-radius: 99px;
+  animation: loader-slide 1.4s ease-in-out infinite;
+}
+
+@keyframes loader-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes loader-pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; text-shadow: 0 0 12px rgba(56, 189, 248, 0.6); }
+}
+
+@keyframes loader-slide {
+  0% { left: -45%; }
+  50% { left: 50%; }
+  100% { left: 100%; }
+}
+
+/* =========================================================
+   MOUSE CURSOR AURA GLOW (DESKTOP)
+   ========================================================= */
+#cursor-glow {
+  position: fixed;
+  width: 420px;
+  height: 420px;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.14) 0%, rgba(129, 140, 248, 0.06) 40%, transparent 70%);
+  transform: translate(-50%, -50%);
+  filter: blur(50px);
+  z-index: -1;
+  transition: opacity 0.3s ease;
+  will-change: transform;
+}
+
+@media (max-width: 768px) {
+  #cursor-glow { display: none; }
+}
+
 /* Dynamic Animated Background Canvas */
 #bg-canvas {
   position: fixed;
@@ -284,6 +389,7 @@ main {
   gap: 1.75rem;
 }
 
+/* Card layout & 3D Interactive Styling */
 .card {
   background: var(--card-bg);
   border: 1px solid var(--card-border);
@@ -296,6 +402,8 @@ main {
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  transform-style: preserve-3d;
+  will-change: transform;
 }
 
 .card:hover {
@@ -469,14 +577,14 @@ textarea.form-input {
 /* Scroll Animation Elements */
 .reveal {
   opacity: 0;
-  transform: translateY(30px);
-  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translateY(32px) scale(0.98);
+  transition: opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1), transform 0.75s cubic-bezier(0.16, 1, 0.3, 1);
   will-change: opacity, transform;
 }
 
 .reveal.active {
   opacity: 1;
-  transform: translateY(0);
+  transform: translateY(0) scale(1);
 }
 
 /* Footer */
@@ -490,48 +598,50 @@ footer {
 }
 
 /* =========================================================
-   MOBILE & TABLET RESPONSIVENESS FIXES (CRITICAL)
+   MOBILE & TABLET RESPONSIVENESS (2 SERVICES + SIGN IN ONLY)
    ========================================================= */
 
 @media (max-width: 768px) {
-  /* 1. Header & Navigation Fixes */
+  /* 1. Navbar Header Layout */
   .navbar {
-    flex-direction: column;
-    align-items: stretch;
-    padding: 0.75rem 1rem 0.6rem;
-    gap: 0.65rem;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.85rem 1rem;
+    gap: 0.5rem;
   }
 
   .nav-brand {
-    font-size: 1.15rem;
-    justify-content: center;
-    width: 100%;
+    font-size: 1.1rem;
   }
 
-  /* Smooth horizontal scrollable pill navigation */
+  /* 2. Hide "Home" and "Reviews" on Mobile */
+  .nav-links li:has(a[href="index.html"]),
+  .nav-links li:has(a[href="reviews.html"]) {
+    display: none !important;
+  }
+
+  /* 3. Keep Only the 2 Services & Auth Button in a Clean Row */
   .nav-links {
     display: flex;
     align-items: center;
-    justify-content: flex-start;
-    gap: 0.5rem;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    width: 100%;
-    padding: 0.2rem 0.2rem 0.4rem;
+    gap: 0.4rem;
+    overflow-x: visible;
+    padding: 0;
   }
 
-  .nav-links::-webkit-scrollbar {
-    display: none;
+  .nav-links li {
+    flex-shrink: 0;
   }
 
   .nav-links a {
     display: inline-block;
-    padding: 0.35rem 0.85rem;
+    padding: 0.4rem 0.75rem;
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 999px;
-    font-size: 0.82rem;
+    font-size: 0.78rem;
   }
 
   .nav-links a.active {
@@ -541,13 +651,13 @@ footer {
   }
 
   .btn-nav {
-    padding: 0.35rem 0.95rem;
-    font-size: 0.82rem;
+    padding: 0.4rem 0.85rem;
+    font-size: 0.78rem;
   }
 
-  /* 2. Main Container & Hero Layout */
+  /* 4. Main Container & Hero Layout */
   main {
-    padding-top: 110px;
+    padding-top: 85px;
   }
 
   .container {
@@ -568,7 +678,7 @@ footer {
     width: 100%;
   }
 
-  /* 3. Grid & Card Stacking */
+  /* 5. Grid & Card Stacking */
   .grid {
     grid-template-columns: 1fr;
     gap: 1.25rem;
@@ -578,7 +688,7 @@ footer {
     padding: 1.6rem 1.35rem;
   }
 
-  /* 4. Payment & Checkout Layout Stacking */
+  /* 6. Payment & Checkout Layout Stacking */
   .payment-layout {
     grid-template-columns: 1fr !important;
     gap: 1.5rem !important;
