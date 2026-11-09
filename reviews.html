@@ -27,24 +27,42 @@
       border-radius: 14px;
       background: rgba(10, 11, 16, 0.4);
     }
+
+    .review-img-thumb {
+      width: 100%;
+      max-height: 220px;
+      object-fit: cover;
+      border-radius: 10px;
+      margin-top: 0.85rem;
+      border: 1px solid var(--card-border);
+      cursor: pointer;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+      display: block;
+      background: #0d0f18;
+    }
+
+    .review-img-thumb:hover {
+      transform: scale(1.02);
+      border-color: var(--accent-cyan);
+    }
   </style>
 </head>
 <body>
   <!-- High-Tech Preloader -->
-<div id="preloader">
-  <div class="loader-content">
-    <div class="loader-ring"></div>
-    <div class="loader-brand">
-      <span class="brand-dot"></span>Innovexa Studio
-    </div>
-    <div class="loader-bar-wrap">
-      <div class="loader-bar-fill"></div>
+  <div id="preloader">
+    <div class="loader-content">
+      <div class="loader-ring"></div>
+      <div class="loader-brand">
+        <span class="brand-dot"></span>Innovexa Studio
+      </div>
+      <div class="loader-bar-wrap">
+        <div class="loader-bar-fill"></div>
+      </div>
     </div>
   </div>
-</div>
 
-<!-- Cursor Glow Light (Follows Mouse) -->
-<div id="cursor-glow"></div>
+  <!-- Cursor Glow Light (Follows Mouse) -->
+  <div id="cursor-glow"></div>
   
   <canvas id="bg-canvas"></canvas>
   <div class="ambient-glow"></div>
@@ -57,6 +75,7 @@
       <li><a href="index.html">Home</a></li>
       <li><a href="web_service.html">Websites</a></li>
       <li><a href="discord_service.html">Discord Bots</a></li>
+      <li><a href="gallery.html">Gallery</a></li>
       <li><a href="reviews.html" class="active">Reviews</a></li>
       <li class="auth-nav-slot"><button class="btn-nav">Sign In</button></li>
     </ul>
@@ -65,7 +84,7 @@
   <main>
     <section class="hero reveal" style="min-height: 35vh; padding-top: 3rem;">
       <div class="badge">Verified Feedback</div>
-      <h1>Client <span class="gradient-text">Experiences & Ratings</span></h1>
+      <h1>Client <span class="gradient-text">Experiences & Proof</span></h1>
       <p>Read what project owners and founders say about our bots and web developments.</p>
     </section>
 
@@ -79,7 +98,7 @@
           <div style="font-size: 2.2rem; margin-bottom: 0.5rem;">🔒</div>
           <h4 style="font-size: 1.1rem; color: #fff; margin-bottom: 0.4rem;">Sign In Required</h4>
           <p style="font-size: 0.85rem; color: var(--text-muted); max-width: 320px; margin: 0 auto 1.4rem;">
-            Only authenticated clients can submit verified ratings and feedback.
+            Only authenticated clients can submit verified ratings, feedback, and screenshots.
           </p>
           <button type="button" id="unlock-login-btn" class="btn btn-primary" style="width: 100%;">
             Sign In to Post Review
@@ -113,6 +132,13 @@
             <textarea id="review-comment" class="form-input" placeholder="How was our communication, delivery, and code quality?" required></textarea>
           </div>
 
+          <!-- Optional Review Screenshot Attachment -->
+          <div class="form-group">
+            <label for="review-image">Attach Screenshot / Proof (Optional, max 5MB)</label>
+            <input type="file" id="review-image" class="form-input" accept="image/*">
+            <div id="image-upload-status" style="font-size: 0.8rem; color: var(--accent-cyan); margin-top: 5px; display: none;">Uploading image to cloud...</div>
+          </div>
+
           <button type="submit" id="submit-review-btn" class="btn btn-primary" style="width: 100%;">Post Review</button>
         </form>
       </div>
@@ -130,6 +156,7 @@
   </footer>
 
   <script src="app.js"></script>
+  <script type="module" src="cart.js"></script>
   <script type="module" src="auth-modal.js"></script>
   <script type="module">
     import { auth, db } from "./firebase-config.js";
@@ -137,6 +164,7 @@
     import { collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
     import { openAuthModal } from "./auth-modal.js";
     import { populateServiceDropdown } from "./services.js";
+    import { uploadImageToCloud } from "./image-uploader.js";
 
     populateServiceDropdown("review-service", true);
 
@@ -146,6 +174,7 @@
     const unlockLoginBtn = document.getElementById("unlock-login-btn");
     const reviewsContainer = document.getElementById("reviews-container");
     const loadingSpinner = document.getElementById("loading-spinner");
+    const uploadStatus = document.getElementById("image-upload-status");
 
     unlockLoginBtn.onclick = () => openAuthModal(false);
 
@@ -175,12 +204,28 @@
       const servicePurchased = document.getElementById("review-service").value;
       const rating = parseInt(document.getElementById("review-rating").value, 10);
       const comment = document.getElementById("review-comment").value.trim();
+      const fileInput = document.getElementById("review-image");
       const btn = document.getElementById("submit-review-btn");
 
       if (!comment) return;
 
       btn.disabled = true;
-      btn.innerText = "Posting...";
+      btn.innerText = "Posting Review...";
+
+      let imageUrl = null;
+      if (fileInput.files && fileInput.files[0]) {
+        try {
+          uploadStatus.style.display = "block";
+          uploadStatus.innerText = "Uploading proof image to cloud...";
+          imageUrl = await uploadImageToCloud(fileInput.files[0]);
+        } catch (uploadErr) {
+          alert("Image Upload Failed: " + uploadErr.message);
+          btn.disabled = false;
+          btn.innerText = "Post Review";
+          uploadStatus.style.display = "none";
+          return;
+        }
+      }
 
       try {
         await addDoc(collection(db, "reviews"), {
@@ -189,9 +234,11 @@
           service: servicePurchased,
           rating: rating,
           comment: comment,
+          imageUrl: imageUrl || null,
           createdAt: serverTimestamp()
         });
         reviewForm.reset();
+        uploadStatus.style.display = "none";
       } catch (err) {
         alert("Failed to post: " + err.message);
       } finally {
@@ -213,6 +260,9 @@
         const stars = "★".repeat(d.rating) + "☆".repeat(5 - d.rating);
         const date = d.createdAt ? new Date(d.createdAt.toDate()).toLocaleDateString() : "Just now";
         const serviceName = d.service || "General Service";
+        const imgMarkup = d.imageUrl 
+          ? `<a href="${d.imageUrl}" target="_blank" rel="noopener noreferrer"><img src="${d.imageUrl}" class="review-img-thumb" alt="Review screenshot" loading="lazy" /></a>` 
+          : "";
 
         reviewsContainer.insertAdjacentHTML('beforeend', `
           <div class="review-card reveal active">
@@ -224,6 +274,7 @@
               <span class="review-stars">${stars}</span>
             </div>
             <p class="review-text" style="margin-top:0.8rem;">${escapeHtml(d.comment)}</p>
+            ${imgMarkup}
             <div class="review-date">${date}</div>
           </div>
         `);
