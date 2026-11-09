@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Innovexa Studio | Master Administration Panel</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    .admin-tab-bar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 2rem;
+      border-bottom: 1px solid var(--card-border);
+      padding-bottom: 1rem;
+    }
+
+    .admin-tab {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+      padding: 0.5rem 1.25rem;
+      border-radius: 8px;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .admin-tab.active {
+      background: rgba(56, 189, 248, 0.15);
+      border-color: var(--accent-cyan);
+      color: #fff;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .data-table th, .data-table td {
+      padding: 0.85rem;
+      border-bottom: 1px solid var(--card-border);
+      text-align: left;
+      font-size: 0.88rem;
+    }
+
+    .data-table th {
+      color: var(--text-muted);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+    }
+  </style>
+</head>
+<body>
+  <div id="preloader"><div class="loader-content"><div class="loader-ring"></div></div></div>
+  <canvas id="bg-canvas"></canvas>
+  <div class="ambient-glow"></div>
+
+  <nav class="navbar">
+    <a href="index.html" class="nav-brand"><span class="brand-dot"></span>Innovexa Studio (Admin)</a>
+    <ul class="nav-links">
+      <li><a href="index.html">Live Site</a></li>
+      <li><a href="profile.html">My Profile</a></li>
+      <li class="auth-nav-slot"><button class="btn-nav">Sign In</button></li>
+    </ul>
+  </nav>
+
+  <main>
+    <section class="container reveal">
+      <!-- Unauthorized Screen -->
+      <div id="admin-locked" class="card" style="text-align:center; padding:3rem 1.5rem; display:block;">
+        <div style="font-size:2.5rem; margin-bottom:0.75rem;">🛡️</div>
+        <h2 style="font-size:1.6rem; color:#fff; margin-bottom:0.5rem;">Admin Access Restricted</h2>
+        <p style="color:var(--text-muted); max-width:400px; margin:0 auto 1.5rem;">
+          You must be signed in with an authorized owner account to access this management dashboard.
+        </p>
+        <button id="admin-login-btn" class="btn btn-primary">Sign In with Admin Account</button>
+      </div>
+
+      <!-- Admin Panel View -->
+      <div id="admin-panel" style="display:none;">
+        <div class="card" style="margin-bottom: 1.5rem; display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <h2 style="font-size:1.4rem; color:#fff;">Control Center</h2>
+            <div id="admin-identity" style="color:var(--accent-cyan); font-size:0.85rem;">Verifying permissions...</div>
+          </div>
+          <span class="badge" style="margin:0; border-color:var(--accent-green); color:#34d399;">Authorized Staff</span>
+        </div>
+
+        <div class="admin-tab-bar">
+          <button class="admin-tab active" data-tab="orders">Manage Orders</button>
+          <button class="admin-tab" data-tab="reviews">Moderate Reviews</button>
+          <button class="admin-tab" data-tab="gallery">Manage Gallery</button>
+        </div>
+
+        <!-- Orders Section -->
+        <div id="tab-orders" class="card" style="padding: 1.8rem;">
+          <h3 style="font-size:1.2rem; margin-bottom:1rem;">Client Orders & Status Updates</h3>
+          <div style="overflow-x:auto;">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Invoice</th>
+                  <th>Client</th>
+                  <th>Services</th>
+                  <th>Total</th>
+                  <th>Discord</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="admin-orders-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Reviews Section -->
+        <div id="tab-reviews" class="card" style="padding: 1.8rem; display:none;">
+          <h3 style="font-size:1.2rem; margin-bottom:1rem;">Moderate Reviews</h3>
+          <div style="overflow-x:auto;">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>User</th>
+                  <th>Rating</th>
+                  <th>Service</th>
+                  <th>Comment</th>
+                  <th>Photo</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="admin-reviews-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Gallery Section -->
+        <div id="tab-gallery" class="card" style="padding: 1.8rem; display:none;">
+          <h3 style="font-size:1.2rem; margin-bottom:1rem;">Gallery Items</h3>
+          <div style="overflow-x:auto;">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Preview</th>
+                  <th>Title</th>
+                  <th>Category</th>
+                  <th>Author</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="admin-gallery-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+  <script type="module" src="auth-modal.js"></script>
+  <script type="module">
+    import { auth, db } from "./firebase-config.js";
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
+    import { collection, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+    import { openAuthModal } from "./auth-modal.js";
+
+    // Set authorized owner email
+    const ADMIN_EMAILS = ["muntasirtonmoy10@gmail.com"];
+
+    const lockedView = document.getElementById("admin-locked");
+    const panelView = document.getElementById("admin-panel");
+    const adminIdentity = document.getElementById("admin-identity");
+    document.getElementById("admin-login-btn").onclick = () => openAuthModal(false);
+
+    // Tab switcher
+    document.querySelectorAll(".admin-tab").forEach(tab => {
+      tab.onclick = () => {
+        document.querySelectorAll(".admin-tab").forEach(t => t.classList.remove("active"));
+        tab.classList.add("active");
+        const target = tab.getAttribute("data-tab");
+        document.getElementById("tab-orders").style.display = target === "orders" ? "block" : "none";
+        document.getElementById("tab-reviews").style.display = target === "reviews" ? "block" : "none";
+        document.getElementById("tab-gallery").style.display = target === "gallery" ? "block" : "none";
+      };
+    });
+
+    onAuthStateChanged(auth, (user) => {
+      if (user && ADMIN_EMAILS.includes(user.email)) {
+        lockedView.style.display = "none";
+        panelView.style.display = "block";
+        adminIdentity.innerText = `Logged in as Owner: ${user.email}`;
+        listenToAdminData();
+      } else {
+        lockedView.style.display = "block";
+        panelView.style.display = "none";
+      }
+    });
+
+    function listenToAdminData() {
+      // 1. Orders Listener
+      onSnapshot(query(collection(db, "orders"), orderBy("createdAt", "desc")), (snap) => {
+        const tbody = document.getElementById("admin-orders-body");
+        tbody.innerHTML = snap.empty ? `<tr><td colspan="7">No orders recorded yet.</td></tr>` : "";
+
+        snap.forEach(d => {
+          const ord = { id: d.id, ...d.data() };
+          const items = ord.items ? ord.items.map(i => i.name).join(", ") : ord.servicePlan;
+          tbody.insertAdjacentHTML("beforeend", `
+            <tr>
+              <td style="color:var(--accent-cyan); font-weight:600;">${ord.invoiceNumber || "N/A"}</td>
+              <td>${ord.userName || ord.userEmail}</td>
+              <td style="max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${items}</td>
+              <td>৳${(ord.totalBDT || ord.priceUSD || 0).toLocaleString()}</td>
+              <td>${ord.discordHandle || "N/A"}</td>
+              <td>
+                <select class="form-input status-select" data-id="${ord.id}" style="padding:0.3rem 0.5rem; font-size:0.8rem;">
+                  <option value="Pending" ${ord.status === "Pending" ? "selected" : ""}>Pending</option>
+                  <option value="In Progress" ${ord.status === "In Progress" ? "selected" : ""}>In Progress</option>
+                  <option value="Completed" ${ord.status === "Completed" ? "selected" : ""}>Completed</option>
+                </select>
+              </td>
+              <td>
+                <button class="btn btn-secondary delete-order-btn" data-id="${ord.id}" style="color:#f87171; border-color:rgba(239,68,68,0.3); padding:0.25rem 0.6rem; font-size:0.75rem;">Delete</button>
+              </td>
+            </tr>
+          `);
+        });
+
+        tbody.querySelectorAll(".status-select").forEach(sel => {
+          sel.onchange = async () => {
+            await updateDoc(doc(db, "orders", sel.getAttribute("data-id")), { status: sel.value });
+          };
+        });
+
+        tbody.querySelectorAll(".delete-order-btn").forEach(btn => {
+          btn.onclick = async () => {
+            if (confirm("Delete this order record permanently?")) {
+              await deleteDoc(doc(db, "orders", btn.getAttribute("data-id")));
+            }
+          };
+        });
+      });
+
+      // 2. Reviews Listener
+      onSnapshot(query(collection(db, "reviews"), orderBy("createdAt", "desc")), (snap) => {
+        const tbody = document.getElementById("admin-reviews-body");
+        tbody.innerHTML = snap.empty ? `<tr><td colspan="6">No reviews to display.</td></tr>` : "";
+
+        snap.forEach(d => {
+          const rev = { id: d.id, ...d.data() };
+          const photo = rev.imageUrl ? `<a href="${rev.imageUrl}" target="_blank" style="color:var(--accent-cyan);">View</a>` : "None";
+          tbody.insertAdjacentHTML("beforeend", `
+            <tr>
+              <td><strong>${rev.authorName}</strong></td>
+              <td>${"★".repeat(rev.rating)}</td>
+              <td>${rev.service || "General"}</td>
+              <td style="max-width:250px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${rev.comment}</td>
+              <td>${photo}</td>
+              <td>
+                <button class="btn btn-secondary delete-rev-btn" data-id="${rev.id}" style="color:#f87171; border-color:rgba(239,68,68,0.3); padding:0.25rem 0.6rem; font-size:0.75rem;">Remove</button>
+              </td>
+            </tr>
+          `);
+        });
+
+        tbody.querySelectorAll(".delete-rev-btn").forEach(btn => {
+          btn.onclick = async () => {
+            if (confirm("Delete this review from the public page?")) {
+              await deleteDoc(doc(db, "reviews", btn.getAttribute("data-id")));
+            }
+          };
+        });
+      });
+
+      // 3. Gallery Listener
+      onSnapshot(query(collection(db, "gallery"), orderBy("createdAt", "desc")), (snap) => {
+        const tbody = document.getElementById("admin-gallery-body");
+        tbody.innerHTML = snap.empty ? `<tr><td colspan="5">No gallery images uploaded.</td></tr>` : "";
+
+        snap.forEach(d => {
+          const g = { id: d.id, ...d.data() };
+          tbody.insertAdjacentHTML("beforeend", `
+            <tr>
+              <td><img src="${g.imageUrl}" style="width:40px; height:40px; object-fit:cover; border-radius:6px;" /></td>
+              <td><strong>${g.title}</strong></td>
+              <td>${g.category || "Showcase"}</td>
+              <td>${g.authorName}</td>
+              <td>
+                <button class="btn btn-secondary delete-gal-btn" data-id="${g.id}" style="color:#f87171; border-color:rgba(239,68,68,0.3); padding:0.25rem 0.6rem; font-size:0.75rem;">Delete</button>
+              </td>
+            </tr>
+          `);
+        });
+
+        tbody.querySelectorAll(".delete-gal-btn").forEach(btn => {
+          btn.onclick = async () => {
+            if (confirm("Remove this item from the gallery?")) {
+              await deleteDoc(doc(db, "gallery", btn.getAttribute("data-id")));
+            }
+          };
+        });
+      });
+    }
+  </script>
+</body>
+</html>
