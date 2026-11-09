@@ -15,6 +15,7 @@
       margin-bottom: 2rem;
       border-bottom: 1px solid var(--card-border);
       padding-bottom: 1rem;
+      overflow-x: auto;
     }
 
     .admin-tab {
@@ -26,6 +27,8 @@
       cursor: pointer;
       font-weight: 600;
       font-size: 0.9rem;
+      white-space: nowrap;
+      transition: all 0.2s ease;
     }
 
     .admin-tab.active {
@@ -50,11 +53,29 @@
       color: var(--text-muted);
       font-size: 0.78rem;
       text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .status-select {
+      transition: border-color 0.3s ease, background-color 0.3s ease;
     }
   </style>
 </head>
 <body>
-  <div id="preloader"><div class="loader-content"><div class="loader-ring"></div></div></div>
+  <!-- High-Tech Preloader -->
+  <div id="preloader">
+    <div class="loader-content">
+      <div class="loader-ring"></div>
+      <div class="loader-brand">
+        <span class="brand-dot"></span>Innovexa Studio (Admin)
+      </div>
+      <div class="loader-bar-wrap">
+        <div class="loader-bar-fill"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="cursor-glow"></div>
   <canvas id="bg-canvas"></canvas>
   <div class="ambient-glow"></div>
 
@@ -71,11 +92,11 @@
   <main>
     <section class="container reveal">
       <!-- Unauthorized Screen -->
-      <div id="admin-locked" class="card" style="text-align:center; padding:3rem 1.5rem; display:block;">
+      <div id="admin-locked" class="card" style="text-align:center; padding:3.5rem 1.5rem; display:block;">
         <div style="font-size:2.5rem; margin-bottom:0.75rem;">🛡️</div>
         <h2 style="font-size:1.6rem; color:#fff; margin-bottom:0.5rem;">Admin Access Restricted</h2>
-        <p style="color:var(--text-muted); max-width:400px; margin:0 auto 1.5rem;">
-          You must be signed in with an authorized owner account to access this management dashboard.
+        <p style="color:var(--text-muted); max-width:420px; margin:0 auto 1.5rem; line-height:1.5;">
+          You must be signed in with the authorized owner account (<code style="color:var(--accent-cyan);">muntasirtonmoy10@gmail.com</code>) to manage this studio.
         </p>
         <button id="admin-login-btn" class="btn btn-primary">Sign In with Admin Account</button>
       </div>
@@ -203,7 +224,6 @@
     import { openAuthModal } from "./auth-modal.js";
     import { uploadImageToCloud } from "./image-uploader.js";
 
-    // Authorized owner email
     const ADMIN_EMAILS = ["muntasirtonmoy10@gmail.com"];
 
     const lockedView = document.getElementById("admin-locked");
@@ -281,42 +301,67 @@
       // 1. Orders Listener
       onSnapshot(query(collection(db, "orders"), orderBy("createdAt", "desc")), (snap) => {
         const tbody = document.getElementById("admin-orders-body");
-        tbody.innerHTML = snap.empty ? `<tr><td colspan="7">No orders recorded yet.</td></tr>` : "";
+        tbody.innerHTML = snap.empty ? `<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:2rem;">No orders recorded yet.</td></tr>` : "";
 
         snap.forEach(d => {
           const ord = { id: d.id, ...d.data() };
-          const items = ord.items ? ord.items.map(i => i.name).join(", ") : ord.servicePlan;
+          const items = ord.items ? ord.items.map(i => i.name).join(", ") : (ord.servicePlan || "Custom Service");
+          const currentStatus = ord.status || "Pending";
+
           tbody.insertAdjacentHTML("beforeend", `
             <tr>
               <td style="color:var(--accent-cyan); font-weight:600;">${ord.invoiceNumber || "N/A"}</td>
               <td>${ord.userName || ord.userEmail}</td>
-              <td style="max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${items}</td>
+              <td style="max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${items}">${items}</td>
               <td>৳${(ord.totalBDT || ord.priceUSD || 0).toLocaleString()}</td>
               <td>${ord.discordHandle || "N/A"}</td>
               <td>
-                <select class="form-input status-select" data-id="${ord.id}" style="padding:0.3rem 0.5rem; font-size:0.8rem;">
-                  <option value="Pending" ${ord.status === "Pending" ? "selected" : ""}>Pending</option>
-                  <option value="In Progress" ${ord.status === "In Progress" ? "selected" : ""}>In Progress</option>
-                  <option value="Completed" ${ord.status === "Completed" ? "selected" : ""}>Completed</option>
+                <select class="form-input status-select" data-id="${ord.id}" data-current-status="${currentStatus}" style="padding:0.35rem 0.6rem; font-size:0.82rem; width:130px;">
+                  <option value="Pending" ${currentStatus === "Pending" ? "selected" : ""}>Pending</option>
+                  <option value="In Progress" ${currentStatus === "In Progress" ? "selected" : ""}>In Progress</option>
+                  <option value="Completed" ${currentStatus === "Completed" ? "selected" : ""}>Completed</option>
                 </select>
               </td>
               <td>
-                <button class="btn btn-secondary delete-order-btn" data-id="${ord.id}" style="color:#f87171; border-color:rgba(239,68,68,0.3); padding:0.25rem 0.6rem; font-size:0.75rem;">Delete</button>
+                <button class="btn btn-secondary delete-order-btn" data-id="${ord.id}" style="color:#f87171; border-color:rgba(239,68,68,0.3); padding:0.3rem 0.65rem; font-size:0.75rem;">Delete</button>
               </td>
             </tr>
           `);
         });
 
+        // Robust Status Update with error catching & visual feedback
         tbody.querySelectorAll(".status-select").forEach(sel => {
           sel.onchange = async () => {
-            await updateDoc(doc(db, "orders", sel.getAttribute("data-id")), { status: sel.value });
+            const orderId = sel.getAttribute("data-id");
+            const newStatus = sel.value;
+            const prevStatus = sel.getAttribute("data-current-status") || "Pending";
+
+            sel.disabled = true;
+            try {
+              await updateDoc(doc(db, "orders", orderId), { 
+                status: newStatus 
+              });
+              sel.setAttribute("data-current-status", newStatus);
+              sel.style.borderColor = "var(--accent-green)";
+              setTimeout(() => { sel.style.borderColor = "var(--card-border)"; }, 1200);
+            } catch (err) {
+              console.error("Failed to update status:", err);
+              alert("Firestore permission error: " + err.message + "\nMake sure your security rules allow updates!");
+              sel.value = prevStatus; // Rollback
+            } finally {
+              sel.disabled = false;
+            }
           };
         });
 
         tbody.querySelectorAll(".delete-order-btn").forEach(btn => {
           btn.onclick = async () => {
             if (confirm("Delete this order record permanently?")) {
-              await deleteDoc(doc(db, "orders", btn.getAttribute("data-id")));
+              try {
+                await deleteDoc(doc(db, "orders", btn.getAttribute("data-id")));
+              } catch (err) {
+                alert("Failed to delete: " + err.message);
+              }
             }
           };
         });
@@ -325,20 +370,20 @@
       // 2. Reviews Listener
       onSnapshot(query(collection(db, "reviews"), orderBy("createdAt", "desc")), (snap) => {
         const tbody = document.getElementById("admin-reviews-body");
-        tbody.innerHTML = snap.empty ? `<tr><td colspan="6">No reviews to display.</td></tr>` : "";
+        tbody.innerHTML = snap.empty ? `<tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:2rem;">No reviews to display.</td></tr>` : "";
 
         snap.forEach(d => {
           const rev = { id: d.id, ...d.data() };
-          const photo = rev.imageUrl ? `<a href="${rev.imageUrl}" target="_blank" rel="noopener noreferrer" style="color:var(--accent-cyan);">View</a>` : "None";
+          const photo = rev.imageUrl ? `<a href="${rev.imageUrl}" target="_blank" rel="noopener noreferrer" style="color:var(--accent-cyan); text-decoration:underline;">View Photo</a>` : "None";
           tbody.insertAdjacentHTML("beforeend", `
             <tr>
               <td><strong>${rev.authorName}</strong></td>
-              <td>${"★".repeat(rev.rating)}</td>
+              <td style="color:#f59e0b;">${"★".repeat(rev.rating)}</td>
               <td>${rev.service || "General"}</td>
-              <td style="max-width:250px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${rev.comment}</td>
+              <td style="max-width:250px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${rev.comment}">${rev.comment}</td>
               <td>${photo}</td>
               <td>
-                <button class="btn btn-secondary delete-rev-btn" data-id="${rev.id}" style="color:#f87171; border-color:rgba(239,68,68,0.3); padding:0.25rem 0.6rem; font-size:0.75rem;">Remove</button>
+                <button class="btn btn-secondary delete-rev-btn" data-id="${rev.id}" style="color:#f87171; border-color:rgba(239,68,68,0.3); padding:0.3rem 0.65rem; font-size:0.75rem;">Remove</button>
               </td>
             </tr>
           `);
@@ -346,8 +391,12 @@
 
         tbody.querySelectorAll(".delete-rev-btn").forEach(btn => {
           btn.onclick = async () => {
-            if (confirm("Delete this review from the public page?")) {
-              await deleteDoc(doc(db, "reviews", btn.getAttribute("data-id")));
+            if (confirm("Delete this review from the public website?")) {
+              try {
+                await deleteDoc(doc(db, "reviews", btn.getAttribute("data-id")));
+              } catch (err) {
+                alert("Failed to remove review: " + err.message);
+              }
             }
           };
         });
@@ -356,18 +405,18 @@
       // 3. Gallery Listener
       onSnapshot(query(collection(db, "gallery"), orderBy("createdAt", "desc")), (snap) => {
         const tbody = document.getElementById("admin-gallery-body");
-        tbody.innerHTML = snap.empty ? `<tr><td colspan="5">No gallery images uploaded.</td></tr>` : "";
+        tbody.innerHTML = snap.empty ? `<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:2rem;">No gallery images uploaded.</td></tr>` : "";
 
         snap.forEach(d => {
           const g = { id: d.id, ...d.data() };
           tbody.insertAdjacentHTML("beforeend", `
             <tr>
-              <td><img src="${g.imageUrl}" style="width:40px; height:40px; object-fit:cover; border-radius:6px;" alt="preview" /></td>
+              <td><img src="${g.imageUrl}" style="width:44px; height:44px; object-fit:cover; border-radius:6px; background:#000;" alt="preview" /></td>
               <td><strong>${g.title}</strong></td>
               <td>${g.category || "Showcase"}</td>
               <td>${g.authorName}</td>
               <td>
-                <button class="btn btn-secondary delete-gal-btn" data-id="${g.id}" style="color:#f87171; border-color:rgba(239,68,68,0.3); padding:0.25rem 0.6rem; font-size:0.75rem;">Delete</button>
+                <button class="btn btn-secondary delete-gal-btn" data-id="${g.id}" style="color:#f87171; border-color:rgba(239,68,68,0.3); padding:0.3rem 0.65rem; font-size:0.75rem;">Delete</button>
               </td>
             </tr>
           `);
@@ -375,8 +424,12 @@
 
         tbody.querySelectorAll(".delete-gal-btn").forEach(btn => {
           btn.onclick = async () => {
-            if (confirm("Remove this item from the gallery?")) {
-              await deleteDoc(doc(db, "gallery", btn.getAttribute("data-id")));
+            if (confirm("Remove this item from the gallery permanently?")) {
+              try {
+                await deleteDoc(doc(db, "gallery", btn.getAttribute("data-id")));
+              } catch (err) {
+                alert("Failed to delete gallery item: " + err.message);
+              }
             }
           };
         });
