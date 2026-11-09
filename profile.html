@@ -101,7 +101,15 @@
   </style>
 </head>
 <body>
-  <div id="preloader"><div class="loader-content"><div class="loader-ring"></div><div class="loader-brand"><span class="brand-dot"></span>Innovexa Studio</div></div></div>
+  <!-- High-Tech Preloader -->
+  <div id="preloader">
+    <div class="loader-content">
+      <div class="loader-ring"></div>
+      <div class="loader-brand"><span class="brand-dot"></span>Innovexa Studio</div>
+      <div class="loader-bar-wrap"><div class="loader-bar-fill"></div></div>
+    </div>
+  </div>
+
   <div id="cursor-glow"></div>
   <canvas id="bg-canvas"></canvas>
   <div class="ambient-glow"></div>
@@ -126,7 +134,10 @@
           <div id="user-avatar" class="user-avatar-circle">U</div>
           <div>
             <h2 id="user-name" style="font-size:1.5rem; margin-bottom:0.25rem; color:#fff;">Loading Profile...</h2>
-            <div id="user-badge" class="badge" style="margin-bottom:0; font-size:0.72rem; padding:0.2rem 0.65rem;">Active Member</div>
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+              <div id="user-badge" class="badge" style="margin-bottom:0; font-size:0.72rem; padding:0.2rem 0.65rem;">Active Member</div>
+              <span id="admin-badge-slot"></span>
+            </div>
           </div>
         </div>
 
@@ -206,12 +217,15 @@
     import { collection, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
     import { openAuthModal } from "./auth-modal.js";
 
+    const ADMIN_EMAIL = "muntasirtonmoy10@gmail.com";
+
     const userNameEl = document.getElementById("user-name");
     const userAvatarEl = document.getElementById("user-avatar");
     const metaEmailEl = document.getElementById("meta-email");
     const metaCreatedEl = document.getElementById("meta-created");
     const metaLastLoginEl = document.getElementById("meta-last-login");
     const metaDiscordEl = document.getElementById("meta-discord");
+    const adminSlotEl = document.getElementById("admin-badge-slot");
     const logoutBtn = document.getElementById("profile-logout-btn");
 
     const loadingEl = document.getElementById("orders-loading");
@@ -240,13 +254,23 @@
         return;
       }
 
-      // Populate User Metadata
       const name = user.displayName || user.email.split('@')[0];
       userNameEl.innerText = name;
       userAvatarEl.innerText = name.charAt(0).toUpperCase();
       metaEmailEl.innerText = user.email || "No email linked";
 
-      // Registration timestamp from Firebase Auth metadata
+      // If user is owner, render the ⚙️ Admin Panel shortcut
+      if (user.email === ADMIN_EMAIL) {
+        adminSlotEl.innerHTML = `
+          <a href="admin.html" class="btn btn-secondary" style="padding:0.25rem 0.75rem; font-size:0.75rem; border-color:var(--accent-cyan); color:var(--accent-cyan); text-decoration:none; display:inline-flex; align-items:center; gap:4px;">
+            ⚙️ Admin Panel
+          </a>
+        `;
+      } else {
+        adminSlotEl.innerHTML = "";
+      }
+
+      // Registration timestamp
       if (user.metadata && user.metadata.creationTime) {
         metaCreatedEl.innerText = new Date(user.metadata.creationTime).toLocaleDateString(undefined, {
           year: 'numeric',
@@ -257,7 +281,7 @@
         metaCreatedEl.innerText = "Member";
       }
 
-      // Last login time
+      // Last active timestamp
       if (user.metadata && user.metadata.lastSignInTime) {
         metaLastLoginEl.innerText = new Date(user.metadata.lastSignInTime).toLocaleDateString(undefined, {
           year: 'numeric',
@@ -291,7 +315,6 @@
           const order = { id: doc.id, ...doc.data() };
           fetchedOrders.push(order);
 
-          // Update Discord contact tag from the most recent order if available
           if (order.discordHandle && order.discordHandle !== "N/A") {
             metaDiscordEl.innerText = order.discordHandle;
           }
