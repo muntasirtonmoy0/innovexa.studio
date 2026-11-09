@@ -62,6 +62,7 @@
     <a href="index.html" class="nav-brand"><span class="brand-dot"></span>Innovexa Studio (Admin)</a>
     <ul class="nav-links">
       <li><a href="index.html">Live Site</a></li>
+      <li><a href="gallery.html">Gallery</a></li>
       <li><a href="profile.html">My Profile</a></li>
       <li class="auth-nav-slot"><button class="btn-nav">Sign In</button></li>
     </ul>
@@ -81,18 +82,52 @@
 
       <!-- Admin Panel View -->
       <div id="admin-panel" style="display:none;">
-        <div class="card" style="margin-bottom: 1.5rem; display:flex; justify-content:space-between; align-items:center;">
+        <div class="card" style="margin-bottom: 1.5rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem;">
           <div>
             <h2 style="font-size:1.4rem; color:#fff;">Control Center</h2>
             <div id="admin-identity" style="color:var(--accent-cyan); font-size:0.85rem;">Verifying permissions...</div>
           </div>
-          <span class="badge" style="margin:0; border-color:var(--accent-green); color:#34d399;">Authorized Staff</span>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <a href="profile.html" class="btn btn-secondary" style="padding:0.4rem 0.85rem; font-size:0.8rem;">View Profile</a>
+            <span class="badge" style="margin:0; border-color:var(--accent-green); color:#34d399;">Authorized Staff</span>
+          </div>
         </div>
 
         <div class="admin-tab-bar">
           <button class="admin-tab active" data-tab="orders">Manage Orders</button>
           <button class="admin-tab" data-tab="reviews">Moderate Reviews</button>
           <button class="admin-tab" data-tab="gallery">Manage Gallery</button>
+          <button class="admin-tab" data-tab="upload">Quick Upload</button>
+        </div>
+
+        <!-- Quick Upload Section -->
+        <div id="tab-upload" class="card" style="padding: 1.8rem; display:none; margin-bottom:1.5rem;">
+          <h3 style="font-size:1.2rem; margin-bottom:0.4rem;">Direct Gallery / Showcase Upload</h3>
+          <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1.2rem;">Post a new screenshot or project straight to the live website without writing code.</p>
+          <form id="admin-quick-upload-form" style="max-width:540px;">
+            <div class="form-group">
+              <label for="admin-item-title">Title / Project Name</label>
+              <input type="text" id="admin-item-title" class="form-input" placeholder="e.g. Eternal SMP Discord Bot v2" required>
+            </div>
+            <div class="form-group">
+              <label for="admin-item-desc">Short Description</label>
+              <textarea id="admin-item-desc" class="form-input" placeholder="Highlight key features, tech stack, or integrations..." required></textarea>
+            </div>
+            <div class="form-group">
+              <label for="admin-item-category">Target Category</label>
+              <select id="admin-item-category" class="form-input">
+                <option value="Website">Website</option>
+                <option value="Discord Bot">Discord Bot</option>
+                <option value="Community Dashboard">Community Dashboard</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="admin-item-file">Screenshot File (Max 5MB)</label>
+              <input type="file" id="admin-item-file" class="form-input" accept="image/*" required>
+              <div id="admin-upload-msg" style="font-size:0.8rem; color:var(--accent-cyan); margin-top:5px; display:none;">Uploading to Cloudinary CDN...</div>
+            </div>
+            <button type="submit" id="admin-upload-submit-btn" class="btn btn-primary" style="width:100%;">Upload & Publish Immediately</button>
+          </form>
         </div>
 
         <!-- Orders Section -->
@@ -159,14 +194,16 @@
   </main>
 
   <script src="app.js"></script>
+  <script type="module" src="cart.js"></script>
   <script type="module" src="auth-modal.js"></script>
   <script type="module">
     import { auth, db } from "./firebase-config.js";
     import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
-    import { collection, onSnapshot, doc, updateDoc, deleteDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+    import { collection, onSnapshot, doc, updateDoc, deleteDoc, addDoc, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
     import { openAuthModal } from "./auth-modal.js";
+    import { uploadImageToCloud } from "./image-uploader.js";
 
-    // Set authorized owner email
+    // Authorized owner email
     const ADMIN_EMAILS = ["muntasirtonmoy10@gmail.com"];
 
     const lockedView = document.getElementById("admin-locked");
@@ -183,6 +220,7 @@
         document.getElementById("tab-orders").style.display = target === "orders" ? "block" : "none";
         document.getElementById("tab-reviews").style.display = target === "reviews" ? "block" : "none";
         document.getElementById("tab-gallery").style.display = target === "gallery" ? "block" : "none";
+        document.getElementById("tab-upload").style.display = target === "upload" ? "block" : "none";
       };
     });
 
@@ -197,6 +235,47 @@
         panelView.style.display = "none";
       }
     });
+
+    // Quick Upload Form Logic
+    const uploadForm = document.getElementById("admin-quick-upload-form");
+    const uploadMsg = document.getElementById("admin-upload-msg");
+    const uploadBtn = document.getElementById("admin-upload-submit-btn");
+
+    uploadForm.onsubmit = async (e) => {
+      e.preventDefault();
+      const user = auth.currentUser;
+      if (!user) return;
+
+      const fileInput = document.getElementById("admin-item-file");
+      if (!fileInput.files[0]) return;
+
+      uploadBtn.disabled = true;
+      uploadBtn.innerText = "Uploading...";
+      uploadMsg.style.display = "block";
+
+      try {
+        const imageUrl = await uploadImageToCloud(fileInput.files[0]);
+        await addDoc(collection(db, "gallery"), {
+          title: document.getElementById("admin-item-title").value.trim(),
+          desc: document.getElementById("admin-item-desc").value.trim(),
+          category: document.getElementById("admin-item-category").value,
+          imageUrl: imageUrl,
+          authorName: "Innovexa Official",
+          userId: user.uid,
+          createdAt: serverTimestamp()
+        });
+
+        uploadForm.reset();
+        alert("Showcase uploaded and published to gallery!");
+        document.querySelector('.admin-tab[data-tab="gallery"]').click();
+      } catch (err) {
+        alert("Upload error: " + err.message);
+      } finally {
+        uploadBtn.disabled = false;
+        uploadBtn.innerText = "Upload & Publish Immediately";
+        uploadMsg.style.display = "none";
+      }
+    };
 
     function listenToAdminData() {
       // 1. Orders Listener
@@ -250,7 +329,7 @@
 
         snap.forEach(d => {
           const rev = { id: d.id, ...d.data() };
-          const photo = rev.imageUrl ? `<a href="${rev.imageUrl}" target="_blank" style="color:var(--accent-cyan);">View</a>` : "None";
+          const photo = rev.imageUrl ? `<a href="${rev.imageUrl}" target="_blank" rel="noopener noreferrer" style="color:var(--accent-cyan);">View</a>` : "None";
           tbody.insertAdjacentHTML("beforeend", `
             <tr>
               <td><strong>${rev.authorName}</strong></td>
@@ -283,7 +362,7 @@
           const g = { id: d.id, ...d.data() };
           tbody.insertAdjacentHTML("beforeend", `
             <tr>
-              <td><img src="${g.imageUrl}" style="width:40px; height:40px; object-fit:cover; border-radius:6px;" /></td>
+              <td><img src="${g.imageUrl}" style="width:40px; height:40px; object-fit:cover; border-radius:6px;" alt="preview" /></td>
               <td><strong>${g.title}</strong></td>
               <td>${g.category || "Showcase"}</td>
               <td>${g.authorName}</td>
