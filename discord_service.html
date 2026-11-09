@@ -11,20 +11,20 @@
 </head>
 <body>
   <!-- High-Tech Preloader -->
-<div id="preloader">
-  <div class="loader-content">
-    <div class="loader-ring"></div>
-    <div class="loader-brand">
-      <span class="brand-dot"></span>Innovexa Studio
-    </div>
-    <div class="loader-bar-wrap">
-      <div class="loader-bar-fill"></div>
+  <div id="preloader">
+    <div class="loader-content">
+      <div class="loader-ring"></div>
+      <div class="loader-brand">
+        <span class="brand-dot"></span>Innovexa Studio
+      </div>
+      <div class="loader-bar-wrap">
+        <div class="loader-bar-fill"></div>
+      </div>
     </div>
   </div>
-</div>
 
-<!-- Cursor Glow Light (Follows Mouse) -->
-<div id="cursor-glow"></div>
+  <!-- Cursor Glow Light (Follows Mouse) -->
+  <div id="cursor-glow"></div>
   
   <canvas id="bg-canvas"></canvas>
   <div class="ambient-glow"></div>
@@ -60,6 +60,18 @@
       <div class="grid" id="discord-services-grid"></div>
     </section>
 
+    <!-- Discord Bot Gallery Showcase -->
+    <section class="container reveal">
+      <div class="section-title">
+        <h2>Discord Bot Showcase</h2>
+        <p>Screenshots of live bots, custom command embeds, and moderation dashboards.</p>
+      </div>
+      <div class="grid" id="discord-gallery-preview"></div>
+      <div style="text-align: center; margin-top: 2rem;">
+        <a href="gallery.html" class="btn btn-secondary">View Community Gallery &rarr;</a>
+      </div>
+    </section>
+
     <!-- Technical Specs -->
     <section class="container reveal">
       <div class="card" style="padding: 2.5rem;">
@@ -82,11 +94,37 @@
   </footer>
 
   <script src="app.js"></script>
+  <script type="module" src="cart.js"></script>
   <script type="module" src="auth-modal.js"></script>
   <script type="module">
     import { discordServices } from "./discord-services-data.js";
     import { renderServiceCards } from "./services.js";
+    import { db } from "./firebase-config.js";
+    import { collection, query, where, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+
     renderServiceCards("discord-services-grid", discordServices);
+
+    const botGallery = document.getElementById("discord-gallery-preview");
+    if (botGallery) {
+      const q = query(collection(db, "gallery"), where("category", "==", "Discord Bot"), limit(3));
+      onSnapshot(q, (snap) => {
+        botGallery.innerHTML = snap.empty ? `<p style="grid-column: 1/-1; text-align: center; color: var(--text-muted);">No Discord bot showcases uploaded yet.</p>` : "";
+        snap.forEach(doc => {
+          const d = doc.data();
+          botGallery.insertAdjacentHTML("beforeend", `
+            <div class="card" style="padding: 0; overflow: hidden;">
+              <a href="${d.imageUrl}" target="_blank" rel="noopener noreferrer">
+                <img src="${d.imageUrl}" alt="${d.title}" style="width: 100%; height: 180px; object-fit: cover; display: block;" loading="lazy" />
+              </a>
+              <div style="padding: 1.25rem;">
+                <h3 style="font-size: 1.1rem; color: #fff; margin-bottom: 0.35rem;">${d.title}</h3>
+                <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.4;">${d.desc}</p>
+              </div>
+            </div>
+          `);
+        });
+      });
+    }
   </script>
 </body>
 </html>
