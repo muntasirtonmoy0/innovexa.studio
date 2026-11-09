@@ -166,7 +166,7 @@ function showError(msg) {
   modalMsg.innerText = msg;
 }
 
-// 3. Global Navbar Sync with Profile / Orders access
+// 3. Global Navbar Sync: Shows a clean Profile button leading to profile.html
 onAuthStateChanged(auth, (user) => {
   if (user) {
     if (checkSessionExpiry()) {
@@ -176,17 +176,10 @@ onAuthStateChanged(auth, (user) => {
     const displayName = user.displayName || user.email.split('@')[0];
     document.querySelectorAll('.auth-nav-slot').forEach(slot => {
       slot.innerHTML = `
-        <div style="display:flex; align-items:center; gap:8px;">
-          <a href="profile.html" class="btn-nav" style="text-decoration:none;">Orders</a>
-          <button class="btn-nav" id="global-logout-btn" style="cursor:pointer; opacity:0.85;">
-            Sign Out (${displayName})
-          </button>
-        </div>
+        <a href="profile.html" class="btn-nav" style="text-decoration:none; display:inline-flex; align-items:center; gap:6px;">
+          <span>👤</span> Profile (${displayName})
+        </a>
       `;
-      slot.querySelector('#global-logout-btn').onclick = () => {
-        localStorage.removeItem('innovexa_login_timestamp');
-        signOut(auth);
-      };
     });
   } else {
     document.querySelectorAll('.auth-nav-slot').forEach(slot => {
