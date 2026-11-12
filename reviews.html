@@ -67,19 +67,8 @@
   <canvas id="bg-canvas"></canvas>
   <div class="ambient-glow"></div>
 
-  <nav class="navbar">
-    <a href="index.html" class="nav-brand">
-      <span class="brand-dot"></span>Innovexa Studio
-    </a>
-    <ul class="nav-links">
-      <li><a href="index.html">Home</a></li>
-      <li><a href="web_service.html">Websites</a></li>
-      <li><a href="discord_service.html">Discord Bots</a></li>
-      <li><a href="gallery.html">Gallery</a></li>
-      <li><a href="reviews.html" class="active">Reviews</a></li>
-      <li class="auth-nav-slot"><button class="btn-nav">Sign In</button></li>
-    </ul>
-  </nav>
+  <!-- Centralized Dynamic Navigation -->
+  <div id="navbar-placeholder"></div>
 
   <main>
     <section class="hero reveal" style="min-height: 35vh; padding-top: 3rem;">
@@ -156,6 +145,7 @@
   </footer>
 
   <script src="app.js"></script>
+  <script src="navbar.js"></script>
   <script type="module" src="cart.js"></script>
   <script type="module" src="auth-modal.js"></script>
   <script type="module">
