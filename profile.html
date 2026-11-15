@@ -114,7 +114,7 @@
   <canvas id="bg-canvas"></canvas>
   <div class="ambient-glow"></div>
 
- <!-- Centralized Dynamic Navigation -->
+  <!-- Centralized Dynamic Navigation -->
   <div id="navbar-placeholder"></div>
 
   <main>
@@ -150,8 +150,8 @@
             <span id="meta-last-login" class="meta-value">—</span>
           </div>
           <div class="meta-item">
-            <span class="meta-label">Discord Contact</span>
-            <span id="meta-discord" class="meta-value" style="color:var(--accent-cyan);">Not Provided</span>
+            <span class="meta-label">Contact Number</span>
+            <span id="meta-phone" class="meta-value" style="color:var(--accent-cyan);">Not Provided</span>
           </div>
         </div>
       </div>
@@ -216,7 +216,7 @@
     const metaEmailEl = document.getElementById("meta-email");
     const metaCreatedEl = document.getElementById("meta-created");
     const metaLastLoginEl = document.getElementById("meta-last-login");
-    const metaDiscordEl = document.getElementById("meta-discord");
+    const metaPhoneEl = document.getElementById("meta-phone");
     const adminSlotEl = document.getElementById("admin-badge-slot");
     const logoutBtn = document.getElementById("profile-logout-btn");
 
@@ -307,8 +307,9 @@
           const order = { id: doc.id, ...doc.data() };
           fetchedOrders.push(order);
 
-          if (order.discordHandle && order.discordHandle !== "N/A") {
-            metaDiscordEl.innerText = order.discordHandle;
+          const contact = order.phoneNumber || order.discordHandle;
+          if (contact && contact !== "N/A") {
+            metaPhoneEl.innerText = contact;
           }
 
           const itemsText = (order.items && order.items.length) 
@@ -351,7 +352,7 @@
             <div style="color:var(--text-muted);">Billed To:</div>
             <div style="font-weight:600; color:#fff;">${order.userName || "Valued Client"}</div>
             <div style="color:var(--text-muted);">${order.userEmail}</div>
-            <div style="color:var(--text-muted);">Discord: ${order.discordHandle || "N/A"}</div>
+            <div style="color:var(--text-muted);">Phone: ${order.phoneNumber || order.discordHandle || "N/A"}</div>
           </div>
           <div style="text-align:right;">
             <div style="color:var(--text-muted);">Invoice Number:</div>
