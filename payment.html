@@ -98,7 +98,7 @@
   <canvas id="bg-canvas"></canvas>
   <div class="ambient-glow"></div>
 
-   <!-- Centralized Dynamic Navigation -->
+  <!-- Centralized Dynamic Navigation -->
   <div id="navbar-placeholder"></div>
 
   <main>
@@ -113,7 +113,7 @@
         <div class="card" style="padding: 2.2rem;">
           <h2 style="font-size: 1.35rem; margin-bottom: 0.4rem;">Client & Payment Setup</h2>
           <p style="font-size: 0.86rem; color: var(--text-muted); margin-bottom: 1.5rem;">
-            Enter your Discord username or contact details so we can deliver your project files and setup access.
+            Enter your phone or WhatsApp number so we can deliver your project files and setup access.
           </p>
 
           <div id="auth-alert" style="display: none; padding: 0.8rem; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; color: #fca5a5; font-size: 0.85rem; margin-bottom: 1.2rem; cursor: pointer;">
@@ -134,8 +134,8 @@
             </div>
 
             <div class="form-group">
-              <label for="contact-discord">Your Discord Handle / Tag (Optional)</label>
-              <input type="text" id="contact-discord" class="form-input" placeholder="e.g. username#0000 or @handle">
+              <label for="contact-phone">Phone / WhatsApp Number</label>
+              <input type="tel" id="contact-phone" class="form-input" placeholder="e.g. +880 17XXXXXXXX" required>
             </div>
 
             <div class="form-group">
@@ -319,7 +319,7 @@
         payableTotal = Number(opt.getAttribute('data-price'));
       }
 
-      const discordHandle = document.getElementById('contact-discord').value.trim() || "N/A";
+      const phoneNumber = document.getElementById('contact-phone').value.trim() || "N/A";
       const notes = document.getElementById('project-notes').value.trim() || "None";
       const customerName = currentUser.displayName || currentUser.email.split('@')[0];
 
@@ -333,7 +333,7 @@
           items: orderItems,
           totalBDT: payableTotal,
           paymentMethod: selectedMethod,
-          discordHandle: discordHandle,
+          phoneNumber: phoneNumber,
           notes: notes,
           status: "Pending",
           createdAt: serverTimestamp()
@@ -344,7 +344,7 @@
           invoice_number: invoiceNumber,
           customer_name: customerName,
           customer_email: currentUser.email,
-          discord_handle: discordHandle,
+          discord_handle: phoneNumber,
           payment_method: selectedMethod,
           total_amount: `৳${payableTotal.toLocaleString()} BDT`,
           order_items: orderItems.map(i => `- ${i.name} (${i.quantity}x) = ৳${(i.price * i.quantity).toLocaleString()} BDT`).join("\n"),
