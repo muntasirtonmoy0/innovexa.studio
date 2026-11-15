@@ -77,6 +77,12 @@
       color: #fff;
     }
 
+    .coupon-box {
+      margin: 1.25rem 0;
+      padding-top: 1.1rem;
+      border-top: 1px solid var(--card-border);
+    }
+
     @media (max-width: 820px) {
       .payment-layout { grid-template-columns: 1fr; }
     }
@@ -105,7 +111,7 @@
     <section class="hero reveal" style="min-height: 22vh; padding-top: 1.5rem; padding-bottom: 0.5rem;">
       <div class="badge">Direct Checkout</div>
       <h1>Order <span class="gradient-text">Configuration</span></h1>
-      <p>Confirm your service specifications, invoice number, and initiate development setup.</p>
+      <p>Confirm your service specifications, apply promo codes, and initiate development setup.</p>
     </section>
 
     <div class="container reveal">
@@ -177,17 +183,28 @@
             <span id="summary-title" style="color: #fff; text-align: right; font-weight: 500;">Loading...</span>
           </div>
           <div class="summary-line">
-            <span>Turnaround Time</span>
-            <span style="color: #fff;">1 - 4 Days</span>
+            <span>Subtotal</span>
+            <span id="summary-subtotal" style="color: #fff;">৳0 BDT</span>
           </div>
-          <div class="summary-line">
-            <span>Revisions Included</span>
-            <span style="color: #fff;">Unlimited Fixes</span>
+          <div class="summary-line" id="summary-discount-row" style="display:none; color:#34d399;">
+            <span>Coupon (<span id="applied-coupon-tag"></span>)</span>
+            <span id="summary-discount-amount">-৳0 BDT</span>
           </div>
           <div class="summary-line">
             <span>Deployment Assistance</span>
             <span style="color: var(--accent-green);">Included (Free)</span>
           </div>
+
+          <!-- Coupon Input Area -->
+          <div class="coupon-box">
+            <label for="coupon-input" style="display:block; font-size:0.8rem; font-weight:600; color:var(--text-muted); margin-bottom:0.45rem;">Have a Promo Coupon?</label>
+            <div style="display:flex; gap:8px;">
+              <input type="text" id="coupon-input" class="form-input" placeholder="e.g. INNOVEXA20" style="padding:0.6rem 0.85rem; font-size:0.85rem; text-transform:uppercase;">
+              <button type="button" id="apply-coupon-btn" class="btn btn-secondary" style="padding:0.6rem 1rem; font-size:0.82rem; white-space:nowrap;">Apply</button>
+            </div>
+            <div id="coupon-feedback" style="font-size:0.78rem; margin-top:6px; display:none;"></div>
+          </div>
+
           <div class="summary-line total">
             <span>Total Payable</span>
             <span id="summary-price" style="color: var(--accent-cyan);">৳0 BDT</span>
@@ -210,26 +227,33 @@
   <script type="module" src="auth-modal.js"></script>
   <script type="module">
     import { auth, db } from "./firebase-config.js";
-    import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+    import { collection, addDoc, getDocs, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
     import { openAuthModal } from "./auth-modal.js";
-    import { populateServiceDropdown } from "./services.js";
-    import { getCart, getCartTotal, clearCart } from "./cart.js";
+    import { populateServiceDropdown, allServices, getEnrichedService } from "./services.js";
+    import { getCart, clearCart } from "./cart.js";
 
-    // 1. Initialize EmailJS with your Public Key
+    // 1. Initialize EmailJS
     emailjs.init("YOUR_EMAILJS_PUBLIC_KEY");
 
-    // 2. Generate Unique Invoice Number (INV-2026-XXXXX)
+    // 2. Generate Unique Invoice Number
     const randomCode = Math.floor(10000 + Math.random() * 90000);
     const invoiceNumber = `INV-2026-${randomCode}`;
     document.getElementById("summary-invoice").innerText = invoiceNumber;
 
     let currentUser = null;
+    let baseSubtotal = 0;
+    let appliedCoupon = null;
+
     const authAlert = document.getElementById("auth-alert");
     const serviceSelect = document.getElementById("order-service");
     const summaryTitle = document.getElementById("summary-title");
+    const summarySubtotal = document.getElementById("summary-subtotal");
     const summaryPrice = document.getElementById("summary-price");
-    const cart = getCart();
+    const discountRow = document.getElementById("summary-discount-row");
+    const appliedCouponTag = document.getElementById("applied-coupon-tag");
+    const discountAmountEl = document.getElementById("summary-discount-amount");
 
+    const cart = getCart();
     populateServiceDropdown("order-service", false);
 
     window.addEventListener('auth-changed', (e) => {
@@ -239,8 +263,28 @@
 
     authAlert.onclick = () => openAuthModal(false);
 
-    // Check if checking out from Shopping Cart or Direct Plan
     const isCartCheckout = cart.length > 0;
+
+    function recalculateTotals() {
+      let discountValue = 0;
+      if (appliedCoupon) {
+        if (appliedCoupon.type === "percent") {
+          discountValue = Math.round(baseSubtotal * (appliedCoupon.value / 100));
+        } else {
+          discountValue = Math.min(baseSubtotal, appliedCoupon.value);
+        }
+        discountRow.style.display = "flex";
+        appliedCouponTag.innerText = appliedCoupon.code;
+        discountAmountEl.innerText = `-৳${discountValue.toLocaleString()} BDT`;
+      } else {
+        discountRow.style.display = "none";
+      }
+
+      const finalTotal = Math.max(0, baseSubtotal - discountValue);
+      summarySubtotal.innerText = `৳${baseSubtotal.toLocaleString()} BDT`;
+      summaryPrice.innerText = `৳${finalTotal.toLocaleString()} BDT`;
+      return { discountValue, finalTotal };
+    }
 
     if (isCartCheckout) {
       document.getElementById("single-service-group").style.display = "none";
@@ -248,15 +292,22 @@
       const cartContent = document.getElementById("cart-items-content");
       cartPreview.style.display = "block";
 
-      cartContent.innerHTML = cart.map(item => `
+      // Sync cart items with latest enriched prices/stock
+      const enrichedCart = cart.map(item => {
+        const raw = allServices.find(s => s.id === item.id);
+        return raw ? { ...getEnrichedService(raw), quantity: item.quantity || 1 } : item;
+      });
+
+      cartContent.innerHTML = enrichedCart.map(item => `
         <div style="display:flex; justify-content:space-between; font-size:0.86rem; color:#fff;">
-          <span>${item.name} (${item.quantity || 1}x)</span>
-          <span style="color:var(--accent-cyan);">৳${(item.price * (item.quantity || 1)).toLocaleString()} BDT</span>
+          <span>${item.name} (${item.quantity}x)</span>
+          <span style="color:var(--accent-cyan);">৳${(item.price * item.quantity).toLocaleString()} BDT</span>
         </div>
       `).join("");
 
-      summaryTitle.innerText = `${cart.length} Service(s)`;
-      summaryPrice.innerText = `৳${getCartTotal().toLocaleString()} BDT`;
+      baseSubtotal = enrichedCart.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+      summaryTitle.innerText = `${enrichedCart.length} Service(s)`;
+      recalculateTotals();
     } else {
       const urlPlan = new URLSearchParams(window.location.search).get('plan');
       if (urlPlan) {
@@ -271,13 +322,70 @@
       function updateSummary() {
         const opt = serviceSelect.options[serviceSelect.selectedIndex];
         if (!opt) return;
-        const price = Number(opt.getAttribute('data-price'));
+        baseSubtotal = Number(opt.getAttribute('data-price')) || 0;
         summaryTitle.innerText = opt.value;
-        summaryPrice.innerText = `৳${price.toLocaleString()} BDT`;
+        recalculateTotals();
       }
       serviceSelect.onchange = updateSummary;
+      serviceSelect.addEventListener("change", updateSummary);
       updateSummary();
     }
+
+    // Apply Coupon Handler
+    const couponInput = document.getElementById("coupon-input");
+    const applyCouponBtn = document.getElementById("apply-coupon-btn");
+    const couponFeedback = document.getElementById("coupon-feedback");
+
+    applyCouponBtn.onclick = async () => {
+      const code = couponInput.value.trim().toUpperCase();
+      if (!code) return;
+
+      applyCouponBtn.disabled = true;
+      applyCouponBtn.innerText = "Checking...";
+      couponFeedback.style.display = "none";
+
+      try {
+        const q = query(collection(db, "coupons"), where("code", "==", code));
+        const snap = await getDocs(q);
+
+        if (snap.empty) {
+          throw new Error("Invalid coupon code.");
+        }
+
+        const couponData = snap.docs[0].data();
+        if (couponData.active === false) {
+          throw new Error("This coupon is no longer active.");
+        }
+
+        if (couponData.expiryDate) {
+          const exp = new Date(couponData.expiryDate + "T23:59:59");
+          if (new Date() > exp) {
+            throw new Error("This coupon has expired.");
+          }
+        }
+
+        appliedCoupon = {
+          code: couponData.code,
+          type: couponData.type || "percent",
+          value: Number(couponData.value) || 0
+        };
+
+        couponFeedback.style.display = "block";
+        couponFeedback.style.color = "#34d399";
+        const label = appliedCoupon.type === "percent" ? `${appliedCoupon.value}% OFF` : `৳${appliedCoupon.value} OFF`;
+        couponFeedback.innerText = `✔ Coupon applied (${label})`;
+        recalculateTotals();
+      } catch (err) {
+        appliedCoupon = null;
+        recalculateTotals();
+        couponFeedback.style.display = "block";
+        couponFeedback.style.color = "#f87171";
+        couponFeedback.innerText = "✖ " + err.message;
+      } finally {
+        applyCouponBtn.disabled = false;
+        applyCouponBtn.innerText = "Apply";
+      }
+    };
 
     let selectedMethod = "bKash / Nagad";
     document.querySelectorAll('.pay-method-card').forEach(card => {
@@ -300,38 +408,47 @@
       btn.innerText = "Submitting Order...";
 
       let orderItems = [];
-      let payableTotal = 0;
-
       if (isCartCheckout) {
-        orderItems = cart.map(item => ({
-          name: item.name,
-          price: item.price,
-          quantity: item.quantity || 1
-        }));
-        payableTotal = getCartTotal();
+        orderItems = cart.map(item => {
+          const raw = allServices.find(s => s.id === item.id);
+          const enriched = raw ? getEnrichedService(raw) : item;
+          return {
+            name: enriched.name,
+            price: enriched.price,
+            quantity: item.quantity || 1
+          };
+        });
       } else {
         const opt = serviceSelect.options[serviceSelect.selectedIndex];
+        if (opt.disabled) {
+          alert("This selected service is currently out of stock.");
+          btn.disabled = false;
+          btn.innerText = "Confirm & Request Invoice";
+          return;
+        }
         orderItems = [{
           name: opt.value,
           price: Number(opt.getAttribute('data-price')),
           quantity: 1
         }];
-        payableTotal = Number(opt.getAttribute('data-price'));
       }
 
+      const { discountValue, finalTotal } = recalculateTotals();
       const phoneNumber = document.getElementById('contact-phone').value.trim() || "N/A";
       const notes = document.getElementById('project-notes').value.trim() || "None";
       const customerName = currentUser.displayName || currentUser.email.split('@')[0];
 
       try {
-        // 1. Save to Cloud Firestore
         await addDoc(collection(db, "orders"), {
           invoiceNumber: invoiceNumber,
           userId: currentUser.uid,
           userEmail: currentUser.email,
           userName: customerName,
           items: orderItems,
-          totalBDT: payableTotal,
+          subtotalBDT: baseSubtotal,
+          couponUsed: appliedCoupon ? appliedCoupon.code : null,
+          discountBDT: discountValue,
+          totalBDT: finalTotal,
           paymentMethod: selectedMethod,
           phoneNumber: phoneNumber,
           notes: notes,
@@ -339,15 +456,15 @@
           createdAt: serverTimestamp()
         });
 
-        // 2. Dispatch Email via EmailJS using Template ID k6vtwwo
+        const couponNote = appliedCoupon ? `\nCoupon Applied: ${appliedCoupon.code} (-৳${discountValue.toLocaleString()} BDT)` : "";
         const emailParams = {
           invoice_number: invoiceNumber,
           customer_name: customerName,
           customer_email: currentUser.email,
           discord_handle: phoneNumber,
           payment_method: selectedMethod,
-          total_amount: `৳${payableTotal.toLocaleString()} BDT`,
-          order_items: orderItems.map(i => `- ${i.name} (${i.quantity}x) = ৳${(i.price * i.quantity).toLocaleString()} BDT`).join("\n"),
+          total_amount: `৳${finalTotal.toLocaleString()} BDT`,
+          order_items: orderItems.map(i => `- ${i.name} (${i.quantity}x) = ৳${(i.price * i.quantity).toLocaleString()} BDT`).join("\n") + couponNote,
           project_notes: notes
         };
 
