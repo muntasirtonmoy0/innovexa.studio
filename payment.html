@@ -227,7 +227,7 @@
   <script type="module" src="auth-modal.js"></script>
   <script type="module">
     import { auth, db } from "./firebase-config.js";
-    import { collection, addDoc, getDocs, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+    import { collection, addDoc, getDocs, doc, getDoc, updateDoc, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
     import { openAuthModal } from "./auth-modal.js";
     import { populateServiceDropdown, allServices, getEnrichedService } from "./services.js";
     import { getCart, clearCart } from "./cart.js";
@@ -292,7 +292,6 @@
       const cartContent = document.getElementById("cart-items-content");
       cartPreview.style.display = "block";
 
-      // Sync cart items with latest enriched prices/stock
       const enrichedCart = cart.map(item => {
         const raw = allServices.find(s => s.id === item.id);
         return raw ? { ...getEnrichedService(raw), quantity: item.quantity || 1 } : item;
@@ -396,6 +395,26 @@
       };
     });
 
+    async function deductStock(itemsToDeduct) {
+      for (const item of itemsToDeduct) {
+        if (!item.id) continue;
+        try {
+          const ref = doc(db, "service_overrides", item.id);
+          const snap = await getDoc(ref);
+          if (snap.exists()) {
+            const currentQty = snap.data().stockCount !== undefined ? Number(snap.data().stockCount) : 10;
+            const newQty = Math.max(0, currentQty - (item.quantity || 1));
+            await updateDoc(ref, {
+              stockCount: newQty,
+              inStock: newQty > 0
+            });
+          }
+        } catch (err) {
+          console.warn("Stock deduction skipped:", err);
+        }
+      }
+    }
+
     document.getElementById('order-form').onsubmit = async (e) => {
       e.preventDefault();
       if (!currentUser) {
@@ -413,6 +432,7 @@
           const raw = allServices.find(s => s.id === item.id);
           const enriched = raw ? getEnrichedService(raw) : item;
           return {
+            id: enriched.id,
             name: enriched.name,
             price: enriched.price,
             quantity: item.quantity || 1
@@ -427,6 +447,7 @@
           return;
         }
         orderItems = [{
+          id: opt.getAttribute('data-plan'),
           name: opt.value,
           price: Number(opt.getAttribute('data-price')),
           quantity: 1
@@ -455,6 +476,8 @@
           status: "Pending",
           createdAt: serverTimestamp()
         });
+
+        await deductStock(orderItems);
 
         const couponNote = appliedCoupon ? `\nCoupon Applied: ${appliedCoupon.code} (-৳${discountValue.toLocaleString()} BDT)` : "";
         const emailParams = {
