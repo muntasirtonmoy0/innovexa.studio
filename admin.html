@@ -162,7 +162,7 @@
                   <th>Client</th>
                   <th>Services</th>
                   <th>Total</th>
-                  <th>Discord</th>
+                  <th>Phone</th>
                   <th>Status</th>
                   <th>Actions</th>
                 </tr>
@@ -314,7 +314,7 @@
               <td>${ord.userName || ord.userEmail}</td>
               <td style="max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${items}">${items}</td>
               <td>৳${(ord.totalBDT || ord.priceUSD || 0).toLocaleString()}</td>
-              <td>${ord.discordHandle || "N/A"}</td>
+              <td>${ord.phoneNumber || ord.discordHandle || "N/A"}</td>
               <td>
                 <select class="form-input status-select" data-id="${ord.id}" data-current-status="${currentStatus}" style="padding:0.35rem 0.6rem; font-size:0.82rem; width:130px;">
                   <option value="Pending" ${currentStatus === "Pending" ? "selected" : ""}>Pending</option>
