@@ -117,9 +117,9 @@
 
         <!-- Stock & Product Discounts Section -->
         <div id="tab-stock" class="card" style="padding: 1.8rem; display:none;">
-          <h3 style="font-size:1.2rem; margin-bottom:0.4rem;">Product Stock Availability & Discounts</h3>
+          <h3 style="font-size:1.2rem; margin-bottom:0.4rem;">Product Stock Quantity, Availability & Discounts</h3>
           <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1.25rem;">
-            Toggle stock status or set percentage discounts on individual products. Set discount to <strong>0</strong> to remove it.
+            Update the exact stock amount, toggle status, or set percentage discounts on any product.
           </p>
           <div style="overflow-x:auto;">
             <table class="data-table">
@@ -129,7 +129,8 @@
                   <th>Base Price</th>
                   <th>Discount (%)</th>
                   <th>Live Price</th>
-                  <th>Availability</th>
+                  <th>Stock Qty</th>
+                  <th>Status</th>
                   <th>Action</th>
                 </tr>
               </thead>
@@ -413,7 +414,7 @@
     };
 
     function listenToAdminData() {
-      // 0. Stock & Product Discounts Listener
+      // 0. Stock Quantity, Availability & Product Discounts Listener
       onSnapshot(collection(db, "service_overrides"), (snap) => {
         const overrides = {};
         snap.forEach(d => { overrides[d.id] = d.data(); });
@@ -423,7 +424,8 @@
 
         allServices.forEach(s => {
           const ov = overrides[s.id] || {};
-          const inStock = ov.inStock !== false;
+          const stockCount = ov.stockCount !== undefined ? Number(ov.stockCount) : 10;
+          const inStock = (ov.inStock !== false) && (stockCount > 0);
           const discountPercent = Number(ov.discountPercent) || 0;
           const livePrice = discountPercent > 0 ? Math.round(s.price * (1 - discountPercent / 100)) : s.price;
 
@@ -432,9 +434,12 @@
               <td><strong>${s.icon} ${s.name}</strong></td>
               <td>৳${s.price.toLocaleString()}</td>
               <td>
-                <input type="number" class="form-input disc-input" data-id="${s.id}" value="${discountPercent}" min="0" max="95" style="width:80px; padding:0.35rem 0.5rem; font-size:0.82rem;">
+                <input type="number" class="form-input disc-input" data-id="${s.id}" value="${discountPercent}" min="0" max="95" style="width:75px; padding:0.35rem 0.5rem; font-size:0.82rem;">
               </td>
               <td style="color:var(--accent-cyan); font-weight:700;">৳${livePrice.toLocaleString()}</td>
+              <td>
+                <input type="number" class="form-input qty-input" data-id="${s.id}" value="${stockCount}" min="0" max="9999" style="width:80px; padding:0.35rem 0.5rem; font-size:0.82rem;">
+              </td>
               <td>
                 <select class="form-input stock-select" data-id="${s.id}" style="width:130px; padding:0.35rem 0.5rem; font-size:0.82rem; color:${inStock ? '#34d399' : '#f87171'};">
                   <option value="true" ${inStock ? "selected" : ""}>In Stock</option>
@@ -453,12 +458,16 @@
             const id = btn.getAttribute("data-id");
             const row = btn.closest("tr");
             const discountPercent = Math.min(95, Math.max(0, Number(row.querySelector(".disc-input").value) || 0));
-            const inStock = row.querySelector(".stock-select").value === "true";
+            const stockCount = Math.max(0, Math.floor(Number(row.querySelector(".qty-input").value) || 0));
+            let inStock = row.querySelector(".stock-select").value === "true";
+
+            if (stockCount === 0) inStock = false;
 
             btn.disabled = true;
             btn.innerText = "Saving...";
             try {
               await setDoc(doc(db, "service_overrides", id), {
+                stockCount,
                 inStock,
                 discountPercent,
                 updatedAt: serverTimestamp()
