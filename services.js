@@ -10,7 +10,7 @@ let serviceOverrides = {};
 let activeRenders = [];
 let activeDropdowns = [];
 
-// Real-time listener for stock & product discounts from Admin Panel
+// Real-time listener for stock count, availability & product discounts
 onSnapshot(collection(db, "service_overrides"), (snap) => {
   serviceOverrides = {};
   snap.forEach(d => {
@@ -22,7 +22,8 @@ onSnapshot(collection(db, "service_overrides"), (snap) => {
 
 export function getEnrichedService(service) {
   const ov = serviceOverrides[service.id] || {};
-  const inStock = ov.inStock !== false; // Defaults to true if not set
+  const stockCount = ov.stockCount !== undefined ? Number(ov.stockCount) : 10; // Default 10 if not set yet
+  const inStock = (ov.inStock !== false) && (stockCount > 0);
   const discountPercent = Number(ov.discountPercent) || 0;
   const finalPrice = discountPercent > 0
     ? Math.round(service.price * (1 - discountPercent / 100))
@@ -30,6 +31,7 @@ export function getEnrichedService(service) {
 
   return {
     ...service,
+    stockCount,
     inStock,
     discountPercent,
     originalPrice: service.price,
@@ -51,9 +53,14 @@ function drawCards(containerId, servicesList) {
   container.innerHTML = servicesList.map(raw => {
     const s = getEnrichedService(raw);
 
-    const stockBadge = s.inStock
-      ? `<span style="font-size:0.72rem; padding:0.2rem 0.55rem; border-radius:99px; background:rgba(52,211,153,0.12); color:#34d399; border:1px solid rgba(52,211,153,0.3); font-weight:600;">● In Stock</span>`
-      : `<span style="font-size:0.72rem; padding:0.2rem 0.55rem; border-radius:99px; background:rgba(239,68,68,0.15); color:#f87171; border:1px solid rgba(239,68,68,0.3); font-weight:600;">● Out of Stock</span>`;
+    let stockBadge = "";
+    if (!s.inStock) {
+      stockBadge = `<span style="font-size:0.72rem; padding:0.2rem 0.55rem; border-radius:99px; background:rgba(239,68,68,0.15); color:#f87171; border:1px solid rgba(239,68,68,0.3); font-weight:600;">● Out of Stock (0)</span>`;
+    } else if (s.stockCount <= 3) {
+      stockBadge = `<span style="font-size:0.72rem; padding:0.2rem 0.55rem; border-radius:99px; background:rgba(251,191,36,0.15); color:#fbbf24; border:1px solid rgba(251,191,36,0.35); font-weight:600;">● Only ${s.stockCount} Left</span>`;
+    } else {
+      stockBadge = `<span style="font-size:0.72rem; padding:0.2rem 0.55rem; border-radius:99px; background:rgba(52,211,153,0.12); color:#34d399; border:1px solid rgba(52,211,153,0.3); font-weight:600;">● In Stock (${s.stockCount})</span>`;
+    }
 
     const discountBadge = s.discountPercent > 0
       ? `<span style="font-size:0.72rem; padding:0.2rem 0.55rem; border-radius:99px; background:rgba(56,189,248,0.15); color:var(--accent-cyan); border:1px solid rgba(56,189,248,0.35); font-weight:700;">${s.discountPercent}% OFF</span>`
@@ -135,7 +142,9 @@ function drawDropdown(selectId, includeAllOption) {
   options += `<optgroup label="Web Development">` +
     webServices.map(raw => {
       const s = getEnrichedService(raw);
-      const tag = !s.inStock ? " [OUT OF STOCK]" : (s.discountPercent > 0 ? ` (${s.discountPercent}% OFF)` : "");
+      const tag = !s.inStock
+        ? " [OUT OF STOCK]"
+        : ` [${s.stockCount} in stock${s.discountPercent > 0 ? ` • ${s.discountPercent}% OFF` : ""}]`;
       return `<option value="${s.name}" data-plan="${s.id}" data-price="${s.price}" ${!s.inStock ? 'disabled' : ''}>${s.name} — ৳${s.price.toLocaleString()} BDT${tag}</option>`;
     }).join("") +
     `</optgroup>`;
@@ -143,7 +152,9 @@ function drawDropdown(selectId, includeAllOption) {
   options += `<optgroup label="Discord Bot Development">` +
     discordServices.map(raw => {
       const s = getEnrichedService(raw);
-      const tag = !s.inStock ? " [OUT OF STOCK]" : (s.discountPercent > 0 ? ` (${s.discountPercent}% OFF)` : "");
+      const tag = !s.inStock
+        ? " [OUT OF STOCK]"
+        : ` [${s.stockCount} in stock${s.discountPercent > 0 ? ` • ${s.discountPercent}% OFF` : ""}]`;
       return `<option value="${s.name}" data-plan="${s.id}" data-price="${s.price}" ${!s.inStock ? 'disabled' : ''}>${s.name} — ৳${s.price.toLocaleString()} BDT${tag}</option>`;
     }).join("") +
     `</optgroup>`;
