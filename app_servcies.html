@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Innovexa Studio | Mobile App Development</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="preloader">
+    <div class="loader-content">
+      <div class="loader-ring"></div>
+      <div class="loader-brand"><span class="brand-dot"></span>Innovexa Studio</div>
+      <div class="loader-bar-wrap"><div class="loader-bar-fill"></div></div>
+    </div>
+  </div>
+  <div id="cursor-glow"></div>
+  <canvas id="bg-canvas"></canvas>
+  <div class="ambient-glow"></div>
+
+  <div id="navbar-placeholder"></div>
+
+  <main>
+    <section class="hero reveal">
+      <div class="badge">Mobile Engineering</div>
+      <h1>Custom Android & iOS <span class="gradient-text">Mobile Applications</span></h1>
+      <p>From instant WebView conversions to full-featured cross-platform apps with real-time cloud backends.</p>
+    </section>
+
+    <section class="container reveal">
+      <div class="section-title">
+        <h2>App Making Packages</h2>
+        <p>Select the mobile solution tailored for your brand or community.</p>
+      </div>
+      <div class="grid" id="app-services-grid"></div>
+    </section>
+  </main>
+
+  <footer><p>&copy; 2026 Innovexa Studio. All rights reserved.</p></footer>
+
+  <script src="app.js"></script>
+  <script src="navbar.js"></script>
+  <script type="module" src="cart.js"></script>
+  <script type="module" src="auth-modal.js"></script>
+  <script type="module">
+    import { appServices } from "./app-services-data.js";
+    import { renderServiceCards } from "./services.js";
+    renderServiceCards("app-services-grid", appServices);
+  </script>
+</body>
+</html>
