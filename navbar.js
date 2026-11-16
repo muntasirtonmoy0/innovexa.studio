@@ -1,11 +1,5 @@
-/* =========================================================
-   INNOVEXA STUDIO - CENTRALIZED DYNAMIC NAVBAR COMPONENT
-   Edit links/products here once to sync across all pages!
-   ========================================================= */
-
 const currentPage = window.location.pathname.split("/").pop() || "index.html";
 
-// Define your dropdown items here (Add future services/products easily!)
 const servicesAndProducts = [
   {
     name: "Web Development",
@@ -18,9 +12,31 @@ const servicesAndProducts = [
     desc: "Custom automation, moderation & economy bots",
     href: "discord_service.html",
     icon: "🤖"
+  },
+  {
+    name: "App Making",
+    desc: "Android & iOS mobile apps built for scale",
+    href: "app_service.html",
+    icon: "📱"
+  },
+  {
+    name: "Paid Promotion",
+    desc: "Targeted server & social shoutout campaigns",
+    href: "promotion_service.html",
+    icon: "📣"
+  },
+  {
+    name: "Digital Marketing",
+    desc: "SEO optimization, Google & Meta ad campaigns",
+    href: "marketing_service.html",
+    icon: "📈"
+  },
+  {
+    name: "Video Making & Editing",
+    desc: "Full promo production & high-retention video edits",
+    href: "video_service.html",
+    icon: "🎬"
   }
-  // Future example:
-  // { name: "Minecraft Plugins", desc: "Custom Paper/Spigot plugins", href: "mc_plugins.html", icon: "⚔️" }
 ];
 
 const isDropdownActive = servicesAndProducts.some(item => item.href === currentPage);
@@ -33,12 +49,11 @@ const navbarHTML = `
     <ul class="nav-links">
       <li><a href="index.html" class="${currentPage === 'index.html' ? 'active' : ''}">Home</a></li>
       
-      <!-- Hover Dropdown for Services & Products -->
       <li class="nav-dropdown" id="services-dropdown">
         <button type="button" class="nav-drop-trigger ${isDropdownActive ? 'active' : ''}">
           Services & Products <span class="drop-arrow">▾</span>
         </button>
-        <div class="nav-dropdown-menu">
+        <div class="nav-dropdown-menu" style="max-height: 75vh; overflow-y: auto;">
           ${servicesAndProducts.map(item => `
             <a href="${item.href}" class="dropdown-item ${currentPage === item.href ? 'active-item' : ''}">
               <span class="dropdown-icon">${item.icon}</span>
@@ -60,13 +75,11 @@ const navbarHTML = `
   </nav>
 `;
 
-// Inject navbar into the placeholder
 const navPlaceholder = document.getElementById("navbar-placeholder");
 if (navPlaceholder) {
   navPlaceholder.outerHTML = navbarHTML;
 }
 
-// Mobile tap support for the dropdown menu
 const dropdown = document.getElementById("services-dropdown");
 if (dropdown) {
   const trigger = dropdown.querySelector(".nav-drop-trigger");
