@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Innovexa Studio | Video Making & Editing</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="preloader">
+    <div class="loader-content">
+      <div class="loader-ring"></div>
+      <div class="loader-brand"><span class="brand-dot"></span>Innovexa Studio</div>
+      <div class="loader-bar-wrap"><div class="loader-bar-fill"></div></div>
+    </div>
+  </div>
+  <div id="cursor-glow"></div>
+  <canvas id="bg-canvas"></canvas>
+  <div class="ambient-glow"></div>
+
+  <div id="navbar-placeholder"></div>
+
+  <main>
+    <section class="hero reveal">
+      <div class="badge">Visual Production</div>
+      <h1>High-Retention <span class="gradient-text">Video Making & Editing</span></h1>
+      <p>From full promo trailers built from your demo reference to crisp, fast-paced edits for YouTube, Reels, and TikTok.</p>
+    </section>
+
+    <section class="container reveal">
+      <div class="section-title">
+        <h2>Video Production & Editing Packages</h2>
+        <p><strong>Note:</strong> Ordering <em>Custom Video Making</em> requires a reference or demo video link during checkout.</p>
+      </div>
+      <div class="grid" id="video-services-grid"></div>
+    </section>
+  </main>
+
+  <footer><p>&copy; 2026 Innovexa Studio. All rights reserved.</p></footer>
+
+  <script src="app.js"></script>
+  <script src="navbar.js"></script>
+  <script type="module" src="cart.js"></script>
+  <script type="module" src="auth-modal.js"></script>
+  <script type="module">
+    import { videoServices } from "./video-services-data.js";
+    import { renderServiceCards } from "./services.js";
+    renderServiceCards("video-services-grid", videoServices);
+  </script>
+</body>
+</html>
