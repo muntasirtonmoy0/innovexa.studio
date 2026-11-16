@@ -41,6 +41,9 @@
       white-space: nowrap;
       transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
       transform: none !important;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
     }
 
     .admin-tab:hover {
@@ -76,6 +79,91 @@
 
     .status-select {
       transition: border-color 0.3s ease, background-color 0.3s ease;
+    }
+
+    /* Admin Live Support Chat Layout */
+    .admin-chat-grid {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 1.25rem;
+      height: 560px;
+    }
+
+    .admin-ticket-list {
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      background: rgba(10, 11, 16, 0.45);
+      overflow-y: auto;
+      padding: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .admin-ticket-card {
+      padding: 0.85rem;
+      border-radius: 10px;
+      border: 1px solid var(--card-border);
+      background: rgba(255, 255, 255, 0.02);
+      cursor: pointer;
+    }
+
+    .admin-ticket-card.active,
+    .admin-ticket-card:hover {
+      border-color: var(--accent-cyan);
+      background: rgba(56, 189, 248, 0.08);
+    }
+
+    .admin-chat-box {
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      background: rgba(10, 11, 16, 0.45);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .admin-chat-messages {
+      flex-grow: 1;
+      padding: 1.25rem;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .admin-bubble {
+      max-width: 75%;
+      padding: 0.7rem 0.95rem;
+      border-radius: 12px;
+      font-size: 0.88rem;
+      line-height: 1.4;
+    }
+
+    .admin-bubble.client {
+      align-self: flex-start;
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid var(--card-border);
+      color: #fff;
+    }
+
+    .admin-bubble.staff {
+      align-self: flex-end;
+      background: linear-gradient(135deg, #4f46e5, #0ea5e9);
+      color: #fff;
+    }
+
+    @media (max-width: 840px) {
+      .admin-chat-grid {
+        grid-template-columns: 1fr;
+        height: auto;
+      }
+      .admin-ticket-list {
+        max-height: 240px;
+      }
+      .admin-chat-box {
+        height: 440px;
+      }
     }
   </style>
 </head>
@@ -126,11 +214,54 @@
 
         <div class="admin-tab-bar">
           <button class="admin-tab active" data-tab="orders">Manage Orders</button>
+          <button class="admin-tab" data-tab="support">
+            Support Chats <span id="unread-support-badge" style="display:none; background:#ef4444; color:#fff; font-size:0.7rem; padding:1px 6px; border-radius:99px;">0</span>
+          </button>
           <button class="admin-tab" data-tab="stock">Stock & Discounts</button>
           <button class="admin-tab" data-tab="coupons">Coupons & Generator</button>
           <button class="admin-tab" data-tab="reviews">Moderate Reviews</button>
           <button class="admin-tab" data-tab="gallery">Manage Gallery</button>
           <button class="admin-tab" data-tab="upload">Quick Upload</button>
+        </div>
+
+        <!-- Support Chats Section -->
+        <div id="tab-support" class="card" style="padding: 1.8rem; display:none;">
+          <h3 style="font-size:1.2rem; margin-bottom:0.35rem;">Live Customer Care & Support Inbox</h3>
+          <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1.25rem;">
+            Select a client conversation on the left to reply directly in real time.
+          </p>
+
+          <div class="admin-chat-grid">
+            <div id="admin-tickets-list" class="admin-ticket-list">
+              <div style="color:var(--text-muted); font-size:0.85rem; padding:1rem;">Loading support chats...</div>
+            </div>
+
+            <div class="admin-chat-box">
+              <div id="admin-chat-empty" style="margin:auto; text-align:center; color:var(--text-muted); padding:2rem;">
+                Select a client conversation to view messages and reply.
+              </div>
+
+              <div id="admin-chat-active" style="display:none; flex-direction:column; height:100%;">
+                <div style="padding:0.9rem 1.2rem; border-bottom:1px solid var(--card-border); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; background:rgba(255,255,255,0.02);">
+                  <div>
+                    <div id="admin-chat-user-title" style="font-weight:700; color:#fff; font-size:0.95rem;">Client Name</div>
+                    <div id="admin-chat-cat-sub" style="font-size:0.78rem; color:var(--accent-cyan);">Category</div>
+                  </div>
+                  <div style="display:flex; gap:8px;">
+                    <button id="admin-close-ticket-btn" class="btn btn-secondary" style="padding:0.3rem 0.7rem; font-size:0.75rem; color:#fbbf24; border-color:rgba(251,191,36,0.3);">Close Ticket</button>
+                    <button id="admin-del-ticket-btn" class="btn btn-secondary" style="padding:0.3rem 0.7rem; font-size:0.75rem; color:#f87171; border-color:rgba(239,68,68,0.3);">Delete</button>
+                  </div>
+                </div>
+
+                <div id="admin-chat-messages" class="admin-chat-messages"></div>
+
+                <form id="admin-chat-reply-form" style="padding:0.85rem; border-top:1px solid var(--card-border); display:flex; gap:8px;">
+                  <input type="text" id="admin-reply-input" class="form-input" placeholder="Reply to client..." autocomplete="off" required>
+                  <button type="submit" class="btn btn-primary" style="padding:0.65rem 1.2rem;">Reply</button>
+                </form>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Stock & Product Discounts Section -->
@@ -325,7 +456,7 @@
     document.getElementById("admin-login-btn").onclick = () => openAuthModal(false);
 
     // Tab switcher
-    const allTabs = ["orders", "stock", "coupons", "reviews", "gallery", "upload"];
+    const allTabs = ["orders", "support", "stock", "coupons", "reviews", "gallery", "upload"];
     document.querySelectorAll(".admin-tab").forEach(tab => {
       tab.onclick = () => {
         document.querySelectorAll(".admin-tab").forEach(t => t.classList.remove("active"));
@@ -431,8 +562,34 @@
       }
     };
 
+    let selectedTicketId = null;
+    let unsubTicketMsgs = null;
+    let allTickets = [];
+
     function listenToAdminData() {
-      // 0. Stock Quantity, Availability & Product Discounts Listener
+      // Support Tickets Listener (Grouped by User Name & Category)
+      onSnapshot(query(collection(db, "support_tickets"), orderBy("updatedAt", "desc")), (snap) => {
+        allTickets = [];
+        let unreadCount = 0;
+
+        snap.forEach(d => {
+          const t = { id: d.id, ...d.data() };
+          allTickets.push(t);
+          if (t.unreadByAdmin) unreadCount++;
+        });
+
+        const badge = document.getElementById("unread-support-badge");
+        if (unreadCount > 0) {
+          badge.style.display = "inline-block";
+          badge.innerText = unreadCount;
+        } else {
+          badge.style.display = "none";
+        }
+
+        renderAdminTicketsList();
+      });
+
+      // Stock Quantity, Availability & Product Discounts Listener
       onSnapshot(collection(db, "service_overrides"), (snap) => {
         const overrides = {};
         snap.forEach(d => { overrides[d.id] = d.data(); });
@@ -502,7 +659,7 @@
         });
       });
 
-      // 0.5 Coupons Listener
+      // Coupons Listener
       onSnapshot(query(collection(db, "coupons"), orderBy("createdAt", "desc")), (snap) => {
         const tbody = document.getElementById("admin-coupons-body");
         tbody.innerHTML = snap.empty ? `<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:1.5rem;">No coupons created yet.</td></tr>` : "";
@@ -546,7 +703,7 @@
         });
       });
 
-      // 1. Orders Listener
+      // Orders Listener
       onSnapshot(query(collection(db, "orders"), orderBy("createdAt", "desc")), (snap) => {
         const tbody = document.getElementById("admin-orders-body");
         tbody.innerHTML = snap.empty ? `<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:2rem;">No orders recorded yet.</td></tr>` : "";
@@ -612,7 +769,7 @@
         });
       });
 
-      // 2. Reviews Listener
+      // Reviews Listener
       onSnapshot(query(collection(db, "reviews"), orderBy("createdAt", "desc")), (snap) => {
         const tbody = document.getElementById("admin-reviews-body");
         tbody.innerHTML = snap.empty ? `<tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:2rem;">No reviews to display.</td></tr>` : "";
@@ -647,7 +804,7 @@
         });
       });
 
-      // 3. Gallery Listener
+      // Gallery Listener
       onSnapshot(query(collection(db, "gallery"), orderBy("createdAt", "desc")), (snap) => {
         const tbody = document.getElementById("admin-gallery-body");
         tbody.innerHTML = snap.empty ? `<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:2rem;">No gallery images uploaded.</td></tr>` : "";
@@ -679,6 +836,117 @@
           };
         });
       });
+    }
+
+    function renderAdminTicketsList() {
+      const listEl = document.getElementById("admin-tickets-list");
+      if (allTickets.length === 0) {
+        listEl.innerHTML = `<div style="color:var(--text-muted); font-size:0.85rem; padding:1rem; text-align:center;">No customer support chats yet.</div>`;
+        return;
+      }
+
+      listEl.innerHTML = allTickets.map(t => `
+        <div class="admin-ticket-card ${t.id === selectedTicketId ? 'active' : ''}" data-id="${t.id}">
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:6px;">
+            <strong style="color:#fff; font-size:0.9rem;">${escapeHtml(t.userName || "Client")}</strong>
+            ${t.unreadByAdmin ? `<span style="background:#ef4444; color:#fff; font-size:0.65rem; padding:1px 6px; border-radius:99px; font-weight:700;">NEW</span>` : `<span style="font-size:0.68rem; color:${t.status === 'Closed' ? '#f87171' : '#34d399'};">${t.status || 'Open'}</span>`}
+          </div>
+          <div style="font-size:0.75rem; color:var(--accent-cyan); margin:2px 0 4px;">${escapeHtml(t.category)}</div>
+          <div style="font-size:0.76rem; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+            ${escapeHtml(t.lastMessage || "")}
+          </div>
+        </div>
+      `).join("");
+
+      listEl.querySelectorAll(".admin-ticket-card").forEach(card => {
+        card.onclick = () => openAdminTicket(card.getAttribute("data-id"));
+      });
+    }
+
+    async function openAdminTicket(ticketId) {
+      selectedTicketId = ticketId;
+      renderAdminTicketsList();
+
+      const ticket = allTickets.find(t => t.id === ticketId);
+      if (!ticket) return;
+
+      document.getElementById("admin-chat-empty").style.display = "none";
+      document.getElementById("admin-chat-active").style.display = "flex";
+      document.getElementById("admin-chat-user-title").innerText = `${ticket.userName} (${ticket.userEmail})`;
+      document.getElementById("admin-chat-cat-sub").innerText = `Topic: ${ticket.category} • Status: ${ticket.status || "Open"}`;
+
+      if (ticket.unreadByAdmin) {
+        await updateDoc(doc(db, "support_tickets", ticketId), { unreadByAdmin: false });
+      }
+
+      if (unsubTicketMsgs) unsubTicketMsgs();
+      const q = query(collection(db, "support_tickets", ticketId, "messages"), orderBy("createdAt", "asc"));
+      const msgBox = document.getElementById("admin-chat-messages");
+
+      unsubTicketMsgs = onSnapshot(q, (snap) => {
+        msgBox.innerHTML = "";
+        snap.forEach(d => {
+          const m = d.data();
+          const isStaff = m.senderRole === "admin";
+          const time = m.createdAt ? new Date(m.createdAt.toDate()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "";
+          msgBox.insertAdjacentHTML("beforeend", `
+            <div class="admin-bubble ${isStaff ? 'staff' : 'client'}">
+              <div>${escapeHtml(m.text)}</div>
+              <div style="font-size:0.68rem; opacity:0.75; margin-top:3px;">${isStaff ? 'You (Admin)' : escapeHtml(m.senderName || ticket.userName)} • ${time}</div>
+            </div>
+          `);
+        });
+        msgBox.scrollTop = msgBox.scrollHeight;
+      });
+    }
+
+    document.getElementById("admin-chat-reply-form").onsubmit = async (e) => {
+      e.preventDefault();
+      if (!selectedTicketId) return;
+
+      const input = document.getElementById("admin-reply-input");
+      const text = input.value.trim();
+      if (!text) return;
+
+      input.value = "";
+      await addDoc(collection(db, "support_tickets", selectedTicketId, "messages"), {
+        senderRole: "admin",
+        senderName: "Innovexa Support",
+        text: text,
+        createdAt: serverTimestamp()
+      });
+
+      await updateDoc(doc(db, "support_tickets", selectedTicketId), {
+        lastMessage: `Admin: ${text}`,
+        unreadByAdmin: false,
+        updatedAt: serverTimestamp()
+      });
+    };
+
+    document.getElementById("admin-close-ticket-btn").onclick = async () => {
+      if (!selectedTicketId) return;
+      await updateDoc(doc(db, "support_tickets", selectedTicketId), {
+        status: "Closed",
+        unreadByAdmin: false
+      });
+    };
+
+    document.getElementById("admin-del-ticket-btn").onclick = async () => {
+      if (!selectedTicketId) return;
+      if (confirm("Delete this support conversation permanently?")) {
+        const idToDelete = selectedTicketId;
+        selectedTicketId = null;
+        if (unsubTicketMsgs) unsubTicketMsgs();
+        document.getElementById("admin-chat-active").style.display = "none";
+        document.getElementById("admin-chat-empty").style.display = "block";
+        await deleteDoc(doc(db, "support_tickets", idToDelete));
+      }
+    };
+
+    function escapeHtml(str) {
+      const div = document.createElement("div");
+      div.innerText = str || "";
+      return div.innerHTML;
     }
   </script>
 </body>
