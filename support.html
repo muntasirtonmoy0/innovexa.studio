@@ -254,6 +254,10 @@
     import { openAuthModal } from "./auth-modal.js";
     import { webServices } from "./web-services-data.js";
     import { discordServices } from "./discord-services-data.js";
+    import { appServices } from "./app-services-data.js";
+    import { promotionServices } from "./promotion-services-data.js";
+    import { marketingServices } from "./marketing-services-data.js";
+    import { videoServices } from "./video-services-data.js";
     import { populateServiceDropdown } from "./services.js";
 
     const lockedEl = document.getElementById("support-locked");
@@ -265,7 +269,7 @@
 
     document.getElementById("support-login-btn").onclick = () => openAuthModal(false);
 
-    // 1. Auto-Sync Categories from webServices & discordServices data files
+    // 1. Auto-Sync Categories from all 6 service data files
     function renderAutoSyncedCategories() {
       const catGrid = document.getElementById("synced-categories-grid");
       const dynamicCategories = [
@@ -280,6 +284,30 @@
           title: "Discord Bot Engineering",
           icon: "🤖",
           desc: `${discordServices.length} packages available — Moderation, economy & custom bots`
+        },
+        {
+          id: "cat-app",
+          title: "App Making & Mobile",
+          icon: "📱",
+          desc: `${appServices.length} packages available — Android & iOS mobile apps`
+        },
+        {
+          id: "cat-promo",
+          title: "Paid Promotion",
+          icon: "📣",
+          desc: `${promotionServices.length} packages available — Server & social shoutouts`
+        },
+        {
+          id: "cat-marketing",
+          title: "Digital Marketing & SEO",
+          icon: "📈",
+          desc: `${marketingServices.length} packages available — SEO & ad campaigns`
+        },
+        {
+          id: "cat-video",
+          title: "Video Making & Editing",
+          icon: "🎬",
+          desc: `${videoServices.length} packages available — Promo videos & pro editing`
         },
         {
           id: "cat-orders",
@@ -380,7 +408,6 @@
     async function startOrOpenCategoryChat(categoryName) {
       if (!currentUser) return;
 
-      // Reuse an existing open ticket for the exact same category if one exists
       const existing = userTickets.find(t => t.category === categoryName && t.status !== "Closed");
       if (existing) {
         openTicketChat(existing.id);
@@ -400,7 +427,6 @@
         updatedAt: serverTimestamp()
       });
 
-      // Auto welcome message
       await addDoc(collection(db, "support_tickets", docRef.id, "messages"), {
         senderRole: "admin",
         senderName: "Innovexa Support",
