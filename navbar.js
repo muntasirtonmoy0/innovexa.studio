@@ -53,6 +53,7 @@ const navbarHTML = `
 
       <li><a href="gallery.html" class="${currentPage === 'gallery.html' ? 'active' : ''}">Gallery</a></li>
       <li><a href="reviews.html" class="${currentPage === 'reviews.html' ? 'active' : ''}">Reviews</a></li>
+      <li><a href="support.html" class="${currentPage === 'support.html' ? 'active' : ''}">Support</a></li>
       <li class="auth-nav-slot"><button class="btn-nav">Sign In</button></li>
     </ul>
   </nav>
