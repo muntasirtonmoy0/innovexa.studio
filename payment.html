@@ -144,6 +144,17 @@
               <input type="tel" id="contact-phone" class="form-input" placeholder="e.g. +880 17XXXXXXXX" required>
             </div>
 
+            <!-- Mandatory Reference/Demo Video Input (Shown automatically for Video Making) -->
+            <div id="video-reference-group" class="form-group" style="display: none;">
+              <label for="video-reference-url" style="color: var(--accent-cyan);">
+                Reference / Demo Video Link (Required for Video Making) *
+              </label>
+              <input type="url" id="video-reference-url" class="form-input" placeholder="https://youtube.com/... or Google Drive demo link">
+              <small style="color: var(--text-muted); font-size: 0.76rem; display: block; margin-top: 4px;">
+                Share a YouTube, Drive, or social link showing the style/pacing you want.
+              </small>
+            </div>
+
             <div class="form-group">
               <label for="project-notes">Project Requirements / Custom Notes</label>
               <textarea id="project-notes" class="form-input" placeholder="Tell us about your brand colors, server ID, API needs, or hosting preference..."></textarea>
@@ -252,6 +263,8 @@
     const discountRow = document.getElementById("summary-discount-row");
     const appliedCouponTag = document.getElementById("applied-coupon-tag");
     const discountAmountEl = document.getElementById("summary-discount-amount");
+    const videoRefGroup = document.getElementById("video-reference-group");
+    const videoRefInput = document.getElementById("video-reference-url");
 
     const cart = getCart();
     populateServiceDropdown("order-service", false);
@@ -264,6 +277,18 @@
     authAlert.onclick = () => openAuthModal(false);
 
     const isCartCheckout = cart.length > 0;
+
+    function checkVideoMakingRequirement() {
+      let needsRef = false;
+      if (isCartCheckout) {
+        needsRef = cart.some(item => item.id === "vid-making-full" || (item.name && item.name.includes("Video Making")));
+      } else {
+        const opt = serviceSelect.options[serviceSelect.selectedIndex];
+        needsRef = opt && opt.getAttribute("data-plan") === "vid-making-full";
+      }
+      videoRefGroup.style.display = needsRef ? "block" : "none";
+      videoRefInput.required = needsRef;
+    }
 
     function recalculateTotals() {
       let discountValue = 0;
@@ -307,6 +332,7 @@
       baseSubtotal = enrichedCart.reduce((sum, i) => sum + (i.price * i.quantity), 0);
       summaryTitle.innerText = `${enrichedCart.length} Service(s)`;
       recalculateTotals();
+      checkVideoMakingRequirement();
     } else {
       const urlPlan = new URLSearchParams(window.location.search).get('plan');
       if (urlPlan) {
@@ -324,6 +350,7 @@
         baseSubtotal = Number(opt.getAttribute('data-price')) || 0;
         summaryTitle.innerText = opt.value;
         recalculateTotals();
+        checkVideoMakingRequirement();
       }
       serviceSelect.onchange = updateSummary;
       serviceSelect.addEventListener("change", updateSummary);
@@ -456,7 +483,9 @@
 
       const { discountValue, finalTotal } = recalculateTotals();
       const phoneNumber = document.getElementById('contact-phone').value.trim() || "N/A";
-      const notes = document.getElementById('project-notes').value.trim() || "None";
+      const videoRefUrl = videoRefInput.value.trim();
+      const rawNotes = document.getElementById('project-notes').value.trim() || "None";
+      const notes = videoRefUrl ? `[Reference Video: ${videoRefUrl}]\n${rawNotes}` : rawNotes;
       const customerName = currentUser.displayName || currentUser.email.split('@')[0];
 
       try {
@@ -472,6 +501,7 @@
           totalBDT: finalTotal,
           paymentMethod: selectedMethod,
           phoneNumber: phoneNumber,
+          referenceVideoUrl: videoRefUrl || null,
           notes: notes,
           status: "Pending",
           createdAt: serverTimestamp()
