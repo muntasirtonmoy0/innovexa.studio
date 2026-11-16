@@ -1,16 +1,26 @@
 import { webServices } from "./web-services-data.js";
 import { discordServices } from "./discord-services-data.js";
+import { appServices } from "./app-services-data.js";
+import { promotionServices } from "./promotion-services-data.js";
+import { marketingServices } from "./marketing-services-data.js";
+import { videoServices } from "./video-services-data.js";
 import { addToCart } from "./cart.js";
 import { db } from "./firebase-config.js";
 import { collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
 
-export const allServices = [...webServices, ...discordServices];
+export const allServices = [
+  ...webServices,
+  ...discordServices,
+  ...appServices,
+  ...promotionServices,
+  ...marketingServices,
+  ...videoServices
+];
 
 let serviceOverrides = {};
 let activeRenders = [];
 let activeDropdowns = [];
 
-// Real-time listener for stock count, availability & product discounts
 onSnapshot(collection(db, "service_overrides"), (snap) => {
   serviceOverrides = {};
   snap.forEach(d => {
@@ -22,7 +32,7 @@ onSnapshot(collection(db, "service_overrides"), (snap) => {
 
 export function getEnrichedService(service) {
   const ov = serviceOverrides[service.id] || {};
-  const stockCount = ov.stockCount !== undefined ? Number(ov.stockCount) : 10; // Default 10 if not set yet
+  const stockCount = ov.stockCount !== undefined ? Number(ov.stockCount) : 10;
   const inStock = (ov.inStock !== false) && (stockCount > 0);
   const discountPercent = Number(ov.discountPercent) || 0;
   const finalPrice = discountPercent > 0
@@ -137,27 +147,28 @@ function drawDropdown(selectId, includeAllOption) {
   if (!select) return;
 
   const prevValue = select.value;
+  const groups = [
+    { label: "Web Development", items: webServices },
+    { label: "Discord Bot Development", items: discordServices },
+    { label: "App Making", items: appServices },
+    { label: "Paid Promotion", items: promotionServices },
+    { label: "Digital Marketing", items: marketingServices },
+    { label: "Video Making & Editing", items: videoServices }
+  ];
+
   let options = includeAllOption ? `<option value="General Service">General Service / All</option>` : "";
 
-  options += `<optgroup label="Web Development">` +
-    webServices.map(raw => {
-      const s = getEnrichedService(raw);
-      const tag = !s.inStock
-        ? " [OUT OF STOCK]"
-        : ` [${s.stockCount} in stock${s.discountPercent > 0 ? ` • ${s.discountPercent}% OFF` : ""}]`;
-      return `<option value="${s.name}" data-plan="${s.id}" data-price="${s.price}" ${!s.inStock ? 'disabled' : ''}>${s.name} — ৳${s.price.toLocaleString()} BDT${tag}</option>`;
-    }).join("") +
-    `</optgroup>`;
-
-  options += `<optgroup label="Discord Bot Development">` +
-    discordServices.map(raw => {
-      const s = getEnrichedService(raw);
-      const tag = !s.inStock
-        ? " [OUT OF STOCK]"
-        : ` [${s.stockCount} in stock${s.discountPercent > 0 ? ` • ${s.discountPercent}% OFF` : ""}]`;
-      return `<option value="${s.name}" data-plan="${s.id}" data-price="${s.price}" ${!s.inStock ? 'disabled' : ''}>${s.name} — ৳${s.price.toLocaleString()} BDT${tag}</option>`;
-    }).join("") +
-    `</optgroup>`;
+  options += groups.map(g => `
+    <optgroup label="${g.label}">
+      ${g.items.map(raw => {
+        const s = getEnrichedService(raw);
+        const tag = !s.inStock
+          ? " [OUT OF STOCK]"
+          : ` [${s.stockCount} in stock${s.discountPercent > 0 ? ` • ${s.discountPercent}% OFF` : ""}]`;
+        return `<option value="${s.name}" data-plan="${s.id}" data-price="${s.price}" ${!s.inStock ? 'disabled' : ''}>${s.name} — ৳${s.price.toLocaleString()} BDT${tag}</option>`;
+      }).join("")}
+    </optgroup>
+  `).join("");
 
   select.innerHTML = options;
   if (prevValue) select.value = prevValue;
