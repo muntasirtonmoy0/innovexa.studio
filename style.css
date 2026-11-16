@@ -738,7 +738,8 @@ footer {
   .nav-links li:has(a[href="index.html"]),
   .nav-links li:has(a[href="gallery.html"]),
   .nav-links li:has(a[href="reviews.html"]),
-  .nav-links li:has(a[href="support.html"]) {
+  .nav-links li:has(a[href="support.html"]),
+  .nav-links li:has(a[href="about.html"]) {
     display: none !important;
   }
 
