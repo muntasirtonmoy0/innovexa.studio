@@ -83,6 +83,27 @@
       border-top: 1px solid var(--card-border);
     }
 
+    .legal-agree-box {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 0.9rem 1rem;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      margin-bottom: 1.25rem;
+      cursor: pointer;
+    }
+
+    .legal-agree-box input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      margin-top: 2px;
+      accent-color: var(--accent-cyan);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
     @media (max-width: 820px) {
       .payment-layout { grid-template-columns: 1fr; }
     }
@@ -176,6 +197,17 @@
               </div>
             </div>
 
+            <!-- Mandatory Terms & Conditions + Privacy Policy Agreement -->
+            <label class="legal-agree-box" for="agree-legal-checkbox">
+              <input type="checkbox" id="agree-legal-checkbox" required>
+              <span style="font-size: 0.83rem; color: var(--text-muted); line-height: 1.45;">
+                I have read and agree to the 
+                <a href="terms.html" target="_blank" rel="noopener noreferrer" style="color: var(--accent-cyan); text-decoration: underline;">Terms &amp; Conditions</a> 
+                and 
+                <a href="privacy.html" target="_blank" rel="noopener noreferrer" style="color: var(--accent-cyan); text-decoration: underline;">Privacy Policy</a>.
+              </span>
+            </label>
+
             <button type="submit" id="submit-order-btn" class="btn btn-primary" style="width: 100%;">
               Confirm & Request Invoice
             </button>
@@ -229,7 +261,7 @@
   </main>
 
   <footer>
-    <p>&copy; 2026 Innovexa Studio. All rights reserved.</p>
+    <p>&copy; 2026 Innovexa Studio. All rights reserved. • <a href="terms.html" style="color:var(--text-muted);">Terms &amp; Conditions</a> • <a href="privacy.html" style="color:var(--text-muted);">Privacy Policy</a></p>
   </footer>
 
   <script src="app.js"></script>
@@ -238,7 +270,7 @@
   <script type="module" src="auth-modal.js"></script>
   <script type="module">
     import { auth, db } from "./firebase-config.js";
-    import { collection, addDoc, getDocs, doc, getDoc, updateDoc, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+    import { collection, addDoc, getDocs, doc, getDoc, updateDoc, increment, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
     import { openAuthModal } from "./auth-modal.js";
     import { populateServiceDropdown, allServices, getEnrichedService } from "./services.js";
     import { getCart, clearCart } from "./cart.js";
@@ -265,6 +297,7 @@
     const discountAmountEl = document.getElementById("summary-discount-amount");
     const videoRefGroup = document.getElementById("video-reference-group");
     const videoRefInput = document.getElementById("video-reference-url");
+    const legalCheckbox = document.getElementById("agree-legal-checkbox");
 
     const cart = getCart();
     populateServiceDropdown("order-service", false);
@@ -357,7 +390,7 @@
       updateSummary();
     }
 
-    // Apply Coupon Handler
+    // Apply Coupon Handler (Checks active, expiry, and maxUses limit)
     const couponInput = document.getElementById("coupon-input");
     const applyCouponBtn = document.getElementById("apply-coupon-btn");
     const couponFeedback = document.getElementById("coupon-feedback");
@@ -378,7 +411,9 @@
           throw new Error("Invalid coupon code.");
         }
 
-        const couponData = snap.docs[0].data();
+        const couponDoc = snap.docs[0];
+        const couponData = couponDoc.data();
+
         if (couponData.active === false) {
           throw new Error("This coupon is no longer active.");
         }
@@ -390,7 +425,14 @@
           }
         }
 
+        const maxUses = Number(couponData.maxUses) || 0;
+        const usedCount = Number(couponData.usedCount) || 0;
+        if (maxUses > 0 && usedCount >= maxUses) {
+          throw new Error("This coupon has reached its maximum usage limit.");
+        }
+
         appliedCoupon = {
+          docId: couponDoc.id,
           code: couponData.code,
           type: couponData.type || "percent",
           value: Number(couponData.value) || 0
@@ -444,6 +486,14 @@
 
     document.getElementById('order-form').onsubmit = async (e) => {
       e.preventDefault();
+
+      // Strict check: Prevent order placement unless Terms & Privacy checkbox is ticked
+      if (!legalCheckbox.checked) {
+        alert("Please tick the checkbox to agree to our Terms & Conditions and Privacy Policy before placing your order.");
+        legalCheckbox.focus();
+        return;
+      }
+
       if (!currentUser) {
         openAuthModal(false);
         return;
@@ -502,12 +552,24 @@
           paymentMethod: selectedMethod,
           phoneNumber: phoneNumber,
           referenceVideoUrl: videoRefUrl || null,
+          agreedToTerms: true,
           notes: notes,
           status: "Pending",
           createdAt: serverTimestamp()
         });
 
         await deductStock(orderItems);
+
+        // Increment Coupon Usage Count if a coupon was applied
+        if (appliedCoupon && appliedCoupon.docId) {
+          try {
+            await updateDoc(doc(db, "coupons", appliedCoupon.docId), {
+              usedCount: increment(1)
+            });
+          } catch (cErr) {
+            console.warn("Coupon usage increment skipped:", cErr);
+          }
+        }
 
         const couponNote = appliedCoupon ? `\nCoupon Applied: ${appliedCoupon.code} (-৳${discountValue.toLocaleString()} BDT)` : "";
         const emailParams = {
