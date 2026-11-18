@@ -98,6 +98,18 @@
     .status-pending { background: rgba(251, 191, 36, 0.15); color: #fbbf24; border: 1px solid rgba(251, 191, 36, 0.3); }
     .status-progress { background: rgba(56, 189, 248, 0.15); color: var(--accent-cyan); border: 1px solid rgba(56, 189, 248, 0.3); }
     .status-completed { background: rgba(52, 211, 153, 0.15); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.3); }
+
+    .inv-detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.65rem 1rem;
+      padding: 0.9rem 1rem;
+      background: rgba(56, 189, 248, 0.05);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      border-radius: 10px;
+      margin-bottom: 1rem;
+      font-size: 0.82rem;
+    }
   </style>
 </head>
 <body>
@@ -160,7 +172,7 @@
       <div class="card" style="padding: 2rem;">
         <h3 style="font-size: 1.3rem; margin-bottom: 0.4rem;">Your Order History & Invoices</h3>
         <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1.5rem;">
-          View your order statuses, specifications, and generated PDF/printable invoices.
+          View your order statuses, payment verification details, and printable invoices.
         </p>
 
         <div id="orders-loading" style="color: var(--text-muted); font-size: 0.9rem;">Loading past orders...</div>
@@ -176,7 +188,7 @@
                 <th>Invoice #</th>
                 <th>Services</th>
                 <th>Total</th>
-                <th>Payment</th>
+                <th>Payment & TrxID</th>
                 <th>Status</th>
                 <th>Action</th>
               </tr>
@@ -188,12 +200,12 @@
     </section>
   </main>
 
-  <!-- Interactive Invoice Modal -->
-  <div id="invoice-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.8); backdrop-filter:blur(8px); z-index:99999; align-items:center; justify-content:center; padding:1rem;">
-    <div class="form-box" style="width:100%; max-width:540px; background:#0f111a; border:1px solid rgba(255,255,255,0.12); position:relative;">
+  <!-- Interactive Detailed Invoice Modal -->
+  <div id="invoice-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.82); backdrop-filter:blur(8px); z-index:99999; align-items:center; justify-content:center; padding:1rem; overflow-y:auto;">
+    <div class="form-box" style="width:100%; max-width:580px; background:#0f111a; border:1px solid rgba(255,255,255,0.14); position:relative; margin:auto;">
       <button id="invoice-close-btn" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:var(--text-muted); font-size:1.5rem; cursor:pointer;">&times;</button>
       <div id="invoice-modal-content"></div>
-      <button onclick="window.print()" class="btn btn-secondary" style="width:100%; margin-top:1.5rem;">🖨️ Print / Save as PDF</button>
+      <button onclick="window.print()" class="btn btn-secondary" style="width:100%; margin-top:1.25rem;">🖨️ Print / Save as PDF</button>
     </div>
   </div>
 
@@ -253,7 +265,6 @@
       userAvatarEl.innerText = name.charAt(0).toUpperCase();
       metaEmailEl.innerText = user.email || "No email linked";
 
-      // If user is owner, render the ⚙️ Admin Panel shortcut
       if (user.email === ADMIN_EMAIL) {
         adminSlotEl.innerHTML = `
           <a href="admin.html" class="btn btn-secondary" style="padding:0.25rem 0.75rem; font-size:0.75rem; border-color:var(--accent-cyan); color:var(--accent-cyan); text-decoration:none; display:inline-flex; align-items:center; gap:4px;">
@@ -264,7 +275,6 @@
         adminSlotEl.innerHTML = "";
       }
 
-      // Registration timestamp
       if (user.metadata && user.metadata.creationTime) {
         metaCreatedEl.innerText = new Date(user.metadata.creationTime).toLocaleDateString(undefined, {
           year: 'numeric',
@@ -275,7 +285,6 @@
         metaCreatedEl.innerText = "Member";
       }
 
-      // Last active timestamp
       if (user.metadata && user.metadata.lastSignInTime) {
         metaLastLoginEl.innerText = new Date(user.metadata.lastSignInTime).toLocaleDateString(undefined, {
           year: 'numeric',
@@ -286,7 +295,6 @@
         metaLastLoginEl.innerText = "Active now";
       }
 
-      // Fetch user orders
       const q = query(
         collection(db, "orders"),
         where("userId", "==", user.uid)
@@ -304,13 +312,16 @@
         tableEl.style.display = "table";
         fetchedOrders = [];
 
-        tbody.innerHTML = "";
-        snapshot.forEach(doc => {
-          const order = { id: doc.id, ...doc.data() };
-          fetchedOrders.push(order);
+        snapshot.forEach(d => {
+          fetchedOrders.push({ id: d.id, ...d.data() });
+        });
 
+        fetchedOrders.sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0));
+
+        tbody.innerHTML = "";
+        fetchedOrders.forEach(order => {
           const contact = order.phoneNumber || order.discordHandle;
-          if (contact && contact !== "N/A") {
+          if (contact && contact !== "N/A" && metaPhoneEl.innerText === "Not Provided") {
             metaPhoneEl.innerText = contact;
           }
 
@@ -323,9 +334,12 @@
           tbody.insertAdjacentHTML("beforeend", `
             <tr>
               <td style="color:var(--accent-cyan); font-weight:600;">${order.invoiceNumber || "N/A"}</td>
-              <td style="color:#fff; max-width:240px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${itemsText}</td>
+              <td style="color:#fff; max-width:220px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${itemsText}</td>
               <td style="color:#fff; font-weight:600;">৳${(order.totalBDT || order.priceUSD || 0).toLocaleString()} BDT</td>
-              <td style="color:var(--text-muted);">${order.paymentMethod || "bKash"}</td>
+              <td>
+                <div style="color:#fff; font-size:0.84rem;">${order.paymentMethod || "bKash"}</div>
+                ${order.transactionId && order.transactionId !== "N/A" ? `<div style="font-size:0.74rem; font-family:monospace; color:var(--accent-cyan);">TrxID: ${order.transactionId}</div>` : ""}
+              </td>
               <td><span class="status-pill ${statusClass}">${order.status || "Pending"}</span></td>
               <td><button class="btn btn-secondary view-inv-btn" data-id="${order.id}" style="padding:0.35rem 0.8rem; font-size:0.78rem;">View Invoice</button></td>
             </tr>
@@ -342,38 +356,95 @@
     });
 
     function showInvoiceModal(order) {
+      const orderDate = order.createdAt?.toDate
+        ? order.createdAt.toDate().toLocaleString([], { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+        : "Recorded";
+
+      const itemsList = (order.items && order.items.length) ? order.items : [{ name: order.servicePlan || "Custom Service", price: order.priceUSD || order.totalBDT || 0, quantity: 1 }];
+      const computedSubtotal = order.subtotalBDT !== undefined
+        ? Number(order.subtotalBDT)
+        : itemsList.reduce((sum, i) => sum + (Number(i.price) * (i.quantity || 1)), 0);
+      const finalPayable = Number(order.totalBDT ?? order.priceUSD ?? computedSubtotal);
+      const discountAmount = order.discountBDT !== undefined ? Number(order.discountBDT) : Math.max(0, computedSubtotal - finalPayable);
+
       invoiceContent.innerHTML = `
-        <div style="border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:1rem; margin-bottom:1rem;">
-          <h2 style="font-size:1.4rem; color:#fff; display:flex; align-items:center; gap:8px;">
-            <span class="brand-dot"></span> Innovexa Studio
-          </h2>
-          <div style="color:var(--text-muted); font-size:0.8rem; margin-top:4px;">Digital Solutions & Discord Bot Engineering</div>
-        </div>
-        <div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:1rem;">
+        <div style="border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:1rem; margin-bottom:1rem; display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:8px;">
           <div>
-            <div style="color:var(--text-muted);">Billed To:</div>
-            <div style="font-weight:600; color:#fff;">${order.userName || "Valued Client"}</div>
-            <div style="color:var(--text-muted);">${order.userEmail}</div>
-            <div style="color:var(--text-muted);">Phone: ${order.phoneNumber || order.discordHandle || "N/A"}</div>
+            <h2 style="font-size:1.35rem; color:#fff; display:flex; align-items:center; gap:8px;">
+              <span class="brand-dot"></span> Innovexa Studio
+            </h2>
+            <div style="color:var(--text-muted); font-size:0.78rem; margin-top:4px;">Digital Solutions &amp; Engineering Services</div>
           </div>
           <div style="text-align:right;">
-            <div style="color:var(--text-muted);">Invoice Number:</div>
-            <div style="font-weight:700; color:var(--accent-cyan); font-size:1rem;">${order.invoiceNumber || "N/A"}</div>
-            <div style="color:var(--text-muted); margin-top:4px;">Status: <span style="color:#fff;">${order.status || "Pending"}</span></div>
+            <div style="font-size:0.72rem; color:var(--text-muted); text-transform:uppercase;">Invoice Number</div>
+            <div style="font-weight:800; color:var(--accent-cyan); font-size:1rem;">${order.invoiceNumber || "N/A"}</div>
+            <div style="font-size:0.74rem; color:var(--text-muted); margin-top:2px;">${orderDate}</div>
           </div>
         </div>
+
+        <div style="display:flex; justify-content:space-between; font-size:0.84rem; margin-bottom:1rem; gap:1rem; flex-wrap:wrap;">
+          <div>
+            <div style="color:var(--text-muted); font-size:0.74rem; text-transform:uppercase;">Billed To</div>
+            <div style="font-weight:700; color:#fff; margin-top:2px;">${order.userName || "Valued Client"}</div>
+            <div style="color:var(--text-muted);">${order.userEmail || "N/A"}</div>
+            <div style="color:var(--text-muted);">Phone: <span style="color:#fff;">${order.phoneNumber || order.discordHandle || "N/A"}</span></div>
+          </div>
+          <div style="text-align:right;">
+            <div style="color:var(--text-muted); font-size:0.74rem; text-transform:uppercase;">Order Status</div>
+            <div style="font-weight:700; color:#34d399; margin-top:2px;">${order.status || "Pending"}</div>
+            <div style="color:var(--text-muted); font-size:0.76rem; margin-top:2px;">Terms Accepted: ✔ Yes</div>
+          </div>
+        </div>
+
+        <!-- Complete Payment & Transaction Verification Block -->
+        <div class="inv-detail-grid">
+          <div>
+            <div style="color:var(--text-muted); font-size:0.72rem; text-transform:uppercase;">Payment Method &amp; Route</div>
+            <div style="color:#fff; font-weight:600; margin-top:2px;">${order.paymentMethod || "N/A"}</div>
+          </div>
+          <div>
+            <div style="color:var(--text-muted); font-size:0.72rem; text-transform:uppercase;">Transaction ID (TrxID)</div>
+            <div style="color:var(--accent-cyan); font-family:monospace; font-weight:700; margin-top:2px;">${order.transactionId || "N/A"}</div>
+          </div>
+          <div style="grid-column: 1 / -1;">
+            <div style="color:var(--text-muted); font-size:0.72rem; text-transform:uppercase;">Sender Account / Number / Bank</div>
+            <div style="color:#fff; font-weight:600; margin-top:2px;">${order.senderAccount || "N/A"}</div>
+          </div>
+        </div>
+
+        <!-- Line Items & Price Breakdown -->
         <div style="margin:1rem 0; padding:1rem; background:rgba(255,255,255,0.03); border-radius:10px; border:1px solid rgba(255,255,255,0.06);">
-          ${(order.items && order.items.length) ? order.items.map(i => `
-            <div style="display:flex; justify-content:space-between; margin-bottom:0.4rem; font-size:0.88rem; color:#fff;">
+          ${itemsList.map(i => `
+            <div style="display:flex; justify-content:space-between; margin-bottom:0.45rem; font-size:0.88rem; color:#fff;">
               <span>${i.name} &times; ${i.quantity || 1}</span>
-              <span style="font-weight:600;">৳${(i.price * (i.quantity || 1)).toLocaleString()} BDT</span>
+              <span style="font-weight:600;">৳${(Number(i.price) * (i.quantity || 1)).toLocaleString()} BDT</span>
             </div>
-          `).join("") : `<div style="display:flex; justify-content:space-between; color:#fff;"><span>${order.servicePlan}</span><span>৳${order.priceUSD}</span></div>`}
-          <div style="border-top:1px solid rgba(255,255,255,0.1); margin-top:0.6rem; padding-top:0.6rem; display:flex; justify-content:space-between; font-weight:700; color:var(--accent-cyan); font-size:1.1rem;">
+          `).join("")}
+
+          <div style="border-top:1px solid rgba(255,255,255,0.08); margin-top:0.6rem; padding-top:0.6rem; display:flex; justify-content:space-between; font-size:0.84rem; color:var(--text-muted);">
+            <span>Subtotal:</span>
+            <span>৳${computedSubtotal.toLocaleString()} BDT</span>
+          </div>
+
+          ${discountAmount > 0 ? `
+            <div style="display:flex; justify-content:space-between; font-size:0.84rem; color:#34d399; margin-top:0.3rem;">
+              <span>Discount ${order.couponUsed ? `(${order.couponUsed})` : ""}:</span>
+              <span>-৳${discountAmount.toLocaleString()} BDT</span>
+            </div>
+          ` : ""}
+
+          <div style="border-top:1px solid rgba(255,255,255,0.1); margin-top:0.6rem; padding-top:0.6rem; display:flex; justify-content:space-between; font-weight:800; color:var(--accent-cyan); font-size:1.1rem;">
             <span>Total Payable:</span>
-            <span>৳${(order.totalBDT || order.priceUSD || 0).toLocaleString()} BDT</span>
+            <span>৳${finalPayable.toLocaleString()} BDT</span>
           </div>
         </div>
+
+        ${(order.referenceVideoUrl || (order.notes && order.notes !== "None")) ? `
+          <div style="padding:0.85rem 1rem; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06); border-radius:10px; font-size:0.8rem; color:var(--text-muted);">
+            ${order.referenceVideoUrl ? `<div style="margin-bottom:4px;"><strong>Reference Video:</strong> <a href="${order.referenceVideoUrl}" target="_blank" rel="noopener noreferrer" style="color:var(--accent-cyan); text-decoration:underline;">${order.referenceVideoUrl}</a></div>` : ""}
+            <div><strong>Project Notes:</strong> <span style="color:#cbd5e1; white-space:pre-line;">${order.notes || "None"}</span></div>
+          </div>
+        ` : ""}
       `;
       invoiceModal.style.display = "flex";
     }
