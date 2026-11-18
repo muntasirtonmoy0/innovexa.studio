@@ -81,6 +81,18 @@
       transition: border-color 0.3s ease, background-color 0.3s ease;
     }
 
+    .inv-detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.65rem 1rem;
+      padding: 0.9rem 1rem;
+      background: rgba(56, 189, 248, 0.05);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      border-radius: 10px;
+      margin-bottom: 1rem;
+      font-size: 0.82rem;
+    }
+
     .admin-chat-grid {
       display: grid;
       grid-template-columns: 320px 1fr;
@@ -381,7 +393,7 @@
 
         <!-- Orders Section -->
         <div id="tab-orders" class="card" style="padding: 1.8rem;">
-          <h3 style="font-size:1.2rem; margin-bottom:1rem;">Client Orders & Status Updates</h3>
+          <h3 style="font-size:1.2rem; margin-bottom:1rem;">Client Orders, Payment Verification & Invoices</h3>
           <div style="overflow-x:auto;">
             <table class="data-table">
               <thead>
@@ -389,7 +401,7 @@
                   <th>Invoice</th>
                   <th>Client</th>
                   <th>Services</th>
-                  <th>Total</th>
+                  <th>Payment &amp; TrxID</th>
                   <th>Phone</th>
                   <th>Status</th>
                   <th>Actions</th>
@@ -442,6 +454,15 @@
     </section>
   </main>
 
+  <!-- Admin Detailed Invoice Modal -->
+  <div id="admin-invoice-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.82); backdrop-filter:blur(8px); z-index:99999; align-items:center; justify-content:center; padding:1rem; overflow-y:auto;">
+    <div class="form-box" style="width:100%; max-width:580px; background:#0f111a; border:1px solid rgba(255,255,255,0.14); position:relative; margin:auto;">
+      <button id="admin-inv-close-btn" style="position:absolute; top:1.2rem; right:1.2rem; background:none; border:none; color:var(--text-muted); font-size:1.5rem; cursor:pointer;">&times;</button>
+      <div id="admin-invoice-content"></div>
+      <button onclick="window.print()" class="btn btn-secondary" style="width:100%; margin-top:1.25rem;">🖨️ Print / Save Invoice as PDF</button>
+    </div>
+  </div>
+
   <script src="app.js"></script>
   <script src="navbar.js"></script>
   <script type="module" src="cart.js"></script>
@@ -460,6 +481,10 @@
     const panelView = document.getElementById("admin-panel");
     const adminIdentity = document.getElementById("admin-identity");
     document.getElementById("admin-login-btn").onclick = () => openAuthModal(false);
+
+    const adminInvModal = document.getElementById("admin-invoice-modal");
+    const adminInvContent = document.getElementById("admin-invoice-content");
+    document.getElementById("admin-inv-close-btn").onclick = () => adminInvModal.style.display = "none";
 
     // Tab switcher
     const allTabs = ["orders", "support", "stock", "coupons", "reviews", "gallery", "upload"];
@@ -574,6 +599,101 @@
     let selectedTicketId = null;
     let unsubTicketMsgs = null;
     let allTickets = [];
+    let allAdminOrders = [];
+
+    function showAdminInvoiceModal(order) {
+      const orderDate = order.createdAt?.toDate
+        ? order.createdAt.toDate().toLocaleString([], { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+        : "Recorded";
+
+      const itemsList = (order.items && order.items.length) ? order.items : [{ name: order.servicePlan || "Custom Service", price: order.priceUSD || order.totalBDT || 0, quantity: 1 }];
+      const computedSubtotal = order.subtotalBDT !== undefined
+        ? Number(order.subtotalBDT)
+        : itemsList.reduce((sum, i) => sum + (Number(i.price) * (i.quantity || 1)), 0);
+      const finalPayable = Number(order.totalBDT ?? order.priceUSD ?? computedSubtotal);
+      const discountAmount = order.discountBDT !== undefined ? Number(order.discountBDT) : Math.max(0, computedSubtotal - finalPayable);
+
+      adminInvContent.innerHTML = `
+        <div style="border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:1rem; margin-bottom:1rem; display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:8px;">
+          <div>
+            <h2 style="font-size:1.35rem; color:#fff; display:flex; align-items:center; gap:8px;">
+              <span class="brand-dot"></span> Innovexa Studio
+            </h2>
+            <div style="color:var(--text-muted); font-size:0.78rem; margin-top:4px;">Official Order &amp; Payment Audit Invoice</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:0.72rem; color:var(--text-muted); text-transform:uppercase;">Invoice Number</div>
+            <div style="font-weight:800; color:var(--accent-cyan); font-size:1rem;">${order.invoiceNumber || "N/A"}</div>
+            <div style="font-size:0.74rem; color:var(--text-muted); margin-top:2px;">${orderDate}</div>
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; font-size:0.84rem; margin-bottom:1rem; gap:1rem; flex-wrap:wrap;">
+          <div>
+            <div style="color:var(--text-muted); font-size:0.74rem; text-transform:uppercase;">Client Details</div>
+            <div style="font-weight:700; color:#fff; margin-top:2px;">${order.userName || "Valued Client"}</div>
+            <div style="color:var(--text-muted);">${order.userEmail || "N/A"}</div>
+            <div style="color:var(--text-muted);">Phone: <span style="color:#fff;">${order.phoneNumber || order.discordHandle || "N/A"}</span></div>
+          </div>
+          <div style="text-align:right;">
+            <div style="color:var(--text-muted); font-size:0.74rem; text-transform:uppercase;">Order Status</div>
+            <div style="font-weight:700; color:#34d399; margin-top:2px;">${order.status || "Pending"}</div>
+            <div style="color:var(--text-muted); font-size:0.76rem; margin-top:2px;">UID: <span style="font-family:monospace;">${(order.userId || "").slice(0, 10)}...</span></div>
+          </div>
+        </div>
+
+        <!-- Complete Payment & Transaction Verification Block -->
+        <div class="inv-detail-grid">
+          <div>
+            <div style="color:var(--text-muted); font-size:0.72rem; text-transform:uppercase;">Payment Method &amp; Route</div>
+            <div style="color:#fff; font-weight:600; margin-top:2px;">${order.paymentMethod || "N/A"}</div>
+          </div>
+          <div>
+            <div style="color:var(--text-muted); font-size:0.72rem; text-transform:uppercase;">Transaction ID (TrxID)</div>
+            <div style="color:#fbbf24; font-family:monospace; font-weight:700; margin-top:2px;">${order.transactionId || "N/A"}</div>
+          </div>
+          <div style="grid-column: 1 / -1;">
+            <div style="color:var(--text-muted); font-size:0.72rem; text-transform:uppercase;">Sender Account / Number / Bank</div>
+            <div style="color:#fff; font-weight:600; margin-top:2px;">${order.senderAccount || "N/A"}</div>
+          </div>
+        </div>
+
+        <!-- Line Items & Price Breakdown -->
+        <div style="margin:1rem 0; padding:1rem; background:rgba(255,255,255,0.03); border-radius:10px; border:1px solid rgba(255,255,255,0.06);">
+          ${itemsList.map(i => `
+            <div style="display:flex; justify-content:space-between; margin-bottom:0.45rem; font-size:0.88rem; color:#fff;">
+              <span>${i.name} &times; ${i.quantity || 1}</span>
+              <span style="font-weight:600;">৳${(Number(i.price) * (i.quantity || 1)).toLocaleString()} BDT</span>
+            </div>
+          `).join("")}
+
+          <div style="border-top:1px solid rgba(255,255,255,0.08); margin-top:0.6rem; padding-top:0.6rem; display:flex; justify-content:space-between; font-size:0.84rem; color:var(--text-muted);">
+            <span>Subtotal:</span>
+            <span>৳${computedSubtotal.toLocaleString()} BDT</span>
+          </div>
+
+          ${discountAmount > 0 ? `
+            <div style="display:flex; justify-content:space-between; font-size:0.84rem; color:#34d399; margin-top:0.3rem;">
+              <span>Coupon Discount ${order.couponUsed ? `(${order.couponUsed})` : ""}:</span>
+              <span>-৳${discountAmount.toLocaleString()} BDT</span>
+            </div>
+          ` : ""}
+
+          <div style="border-top:1px solid rgba(255,255,255,0.1); margin-top:0.6rem; padding-top:0.6rem; display:flex; justify-content:space-between; font-weight:800; color:var(--accent-cyan); font-size:1.1rem;">
+            <span>Total Paid:</span>
+            <span>৳${finalPayable.toLocaleString()} BDT</span>
+          </div>
+        </div>
+
+        ${(order.referenceVideoUrl || (order.notes && order.notes !== "None")) ? `
+          <div style="padding:0.85rem 1rem; background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.06); border-radius:10px; font-size:0.8rem; color:var(--text-muted);">
+            ${order.referenceVideoUrl ? `<div style="margin-bottom:4px;"><strong>Reference Video:</strong> <a href="${order.referenceVideoUrl}" target="_blank" rel="noopener noreferrer" style="color:var(--accent-cyan); text-decoration:underline;">${order.referenceVideoUrl}</a></div>` : ""}
+            <div><strong>Client Notes:</strong> <span style="color:#cbd5e1; white-space:pre-line;">${order.notes || "None"}</span></div>
+          </div>
+        ` : ""}
+      `;
+      adminInvModal.style.display = "flex";
+    }
 
     function listenToAdminData() {
       // Support Tickets Listener
@@ -668,7 +788,7 @@
         });
       });
 
-      // Coupons Listener (With Used Count, Uses Left & Editable Total Max Uses)
+      // Coupons Listener
       onSnapshot(query(collection(db, "coupons"), orderBy("createdAt", "desc")), (snap) => {
         const tbody = document.getElementById("admin-coupons-body");
         tbody.innerHTML = snap.empty ? `<tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:1.5rem;">No coupons created yet.</td></tr>` : "";
@@ -748,23 +868,35 @@
       onSnapshot(query(collection(db, "orders"), orderBy("createdAt", "desc")), (snap) => {
         const tbody = document.getElementById("admin-orders-body");
         tbody.innerHTML = snap.empty ? `<tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:2rem;">No orders recorded yet.</td></tr>` : "";
+        allAdminOrders = [];
 
         snap.forEach(d => {
           const ord = { id: d.id, ...d.data() };
+          allAdminOrders.push(ord);
+
           const items = ord.items ? ord.items.map(i => i.name).join(", ") : (ord.servicePlan || "Custom Service");
           const currentStatus = ord.status || "Pending";
-          const couponBadge = ord.couponUsed ? `<div style="font-size:0.72rem; color:#34d399;">Code: ${ord.couponUsed}</div>` : "";
+          const couponBadge = ord.couponUsed ? `<div style="font-size:0.72rem; color:#34d399;">Coupon: ${ord.couponUsed}</div>` : "";
           const refLink = ord.referenceVideoUrl ? `<div><a href="${ord.referenceVideoUrl}" target="_blank" rel="noopener noreferrer" style="font-size:0.74rem; color:var(--accent-cyan); text-decoration:underline;">🎬 Reference Video</a></div>` : "";
 
           tbody.insertAdjacentHTML("beforeend", `
             <tr>
               <td style="color:var(--accent-cyan); font-weight:600;">${ord.invoiceNumber || "N/A"}</td>
-              <td>${ord.userName || ord.userEmail}</td>
-              <td style="max-width:210px;">
+              <td>
+                <div style="font-weight:600; color:#fff;">${ord.userName || ord.userEmail}</div>
+                <div style="font-size:0.74rem; color:var(--text-muted);">${ord.userEmail || ""}</div>
+              </td>
+              <td style="max-width:200px;">
                 <div style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${items}">${items}</div>
                 ${refLink}
               </td>
-              <td>৳${(ord.totalBDT || ord.priceUSD || 0).toLocaleString()}${couponBadge}</td>
+              <td>
+                <div style="font-weight:700; color:#fff;">৳${(ord.totalBDT || ord.priceUSD || 0).toLocaleString()}</div>
+                <div style="font-size:0.73rem; color:var(--accent-cyan);">${ord.paymentMethod || "bKash"}</div>
+                ${ord.transactionId && ord.transactionId !== "N/A" ? `<div style="font-size:0.72rem; font-family:monospace; color:#fbbf24;">TrxID: ${ord.transactionId}</div>` : ""}
+                ${ord.senderAccount && ord.senderAccount !== "N/A" ? `<div style="font-size:0.7rem; color:var(--text-muted);">From: ${ord.senderAccount}</div>` : ""}
+                ${couponBadge}
+              </td>
               <td>${ord.phoneNumber || ord.discordHandle || "N/A"}</td>
               <td>
                 <select class="form-input status-select" data-id="${ord.id}" data-current-status="${currentStatus}" style="padding:0.35rem 0.6rem; font-size:0.82rem; width:130px;">
@@ -774,10 +906,20 @@
                 </select>
               </td>
               <td>
-                <button class="btn btn-secondary delete-order-btn" data-id="${ord.id}" style="color:#f87171; border-color:rgba(239,68,68,0.3); padding:0.3rem 0.65rem; font-size:0.75rem;">Delete</button>
+                <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                  <button class="btn btn-secondary admin-view-inv-btn" data-id="${ord.id}" style="padding:0.3rem 0.65rem; font-size:0.75rem; border-color:rgba(56,189,248,0.35); color:var(--accent-cyan);">Invoice</button>
+                  <button class="btn btn-secondary delete-order-btn" data-id="${ord.id}" style="color:#f87171; border-color:rgba(239,68,68,0.3); padding:0.3rem 0.65rem; font-size:0.75rem;">Delete</button>
+                </div>
               </td>
             </tr>
           `);
+        });
+
+        tbody.querySelectorAll(".admin-view-inv-btn").forEach(btn => {
+          btn.onclick = () => {
+            const ord = allAdminOrders.find(o => o.id === btn.getAttribute("data-id"));
+            if (ord) showAdminInvoiceModal(ord);
+          };
         });
 
         tbody.querySelectorAll(".status-select").forEach(sel => {
