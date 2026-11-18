@@ -12,10 +12,10 @@
   <style>
     .payment-layout {
       display: grid;
-      grid-template-columns: 1.15fr 0.85fr;
+      grid-template-columns: 1.18fr 0.82fr;
       gap: 2rem;
       align-items: start;
-      max-width: 1040px;
+      max-width: 1060px;
       margin: 2rem auto;
     }
 
@@ -23,20 +23,18 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 1rem;
-      margin-bottom: 1.5rem;
+      margin-bottom: 1.25rem;
     }
 
     .pay-method-card {
       border: 1px solid var(--card-border);
-      background: rgba(10, 11, 16, 0.5);
-      border-radius: 12px;
-      padding: 1rem;
+      background: rgba(10, 11, 16, 0.55);
+      border-radius: 14px;
+      padding: 1.1rem;
       cursor: pointer;
       display: flex;
-      align-items: center;
-      gap: 10px;
-      font-size: 0.9rem;
-      font-weight: 600;
+      flex-direction: column;
+      gap: 4px;
       transition: all 0.2s ease;
     }
 
@@ -47,7 +45,43 @@
     .pay-method-card.active {
       border-color: var(--accent-cyan);
       background: rgba(56, 189, 248, 0.1);
-      box-shadow: 0 0 15px rgba(56, 189, 248, 0.15);
+      box-shadow: 0 0 18px rgba(56, 189, 248, 0.15);
+    }
+
+    .pay-details-panel {
+      background: rgba(10, 11, 16, 0.65);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-radius: 14px;
+      padding: 1.25rem;
+      margin-bottom: 1.4rem;
+    }
+
+    .acc-copy-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 0.6rem 0.85rem;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      margin-top: 0.5rem;
+    }
+
+    .copy-mini-btn {
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      color: var(--accent-cyan);
+      padding: 0.25rem 0.65rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .copy-mini-btn:hover {
+      background: rgba(56, 189, 248, 0.28);
     }
 
     .order-summary-box {
@@ -106,6 +140,7 @@
 
     @media (max-width: 820px) {
       .payment-layout { grid-template-columns: 1fr; }
+      .payment-options { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -132,7 +167,7 @@
     <section class="hero reveal" style="min-height: 22vh; padding-top: 1.5rem; padding-bottom: 0.5rem;">
       <div class="badge">Direct Checkout</div>
       <h1>Order <span class="gradient-text">Configuration</span></h1>
-      <p>Confirm your service specifications, apply promo codes, and initiate development setup.</p>
+      <p>Confirm your service specifications, complete bKash or Bank transfer, and initiate development.</p>
     </section>
 
     <div class="container reveal">
@@ -140,7 +175,7 @@
         <div class="card" style="padding: 2.2rem;">
           <h2 style="font-size: 1.35rem; margin-bottom: 0.4rem;">Client & Payment Setup</h2>
           <p style="font-size: 0.86rem; color: var(--text-muted); margin-bottom: 1.5rem;">
-            Enter your phone or WhatsApp number so we can deliver your project files and setup access.
+            Enter your phone or WhatsApp number and choose your preferred bKash or Bank transfer route.
           </p>
 
           <div id="auth-alert" style="display: none; padding: 0.8rem; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 8px; color: #fca5a5; font-size: 0.85rem; margin-bottom: 1.2rem; cursor: pointer;">
@@ -148,13 +183,13 @@
           </div>
 
           <form id="order-form">
-            <!-- Single Service Select (Shown if direct plan checkout) -->
+            <!-- Single Service Select -->
             <div id="single-service-group" class="form-group">
               <label for="order-service">Service Selected</label>
               <select id="order-service" class="form-input"></select>
             </div>
 
-            <!-- Cart Items Summary (Shown if cart has items) -->
+            <!-- Cart Items Summary -->
             <div id="cart-items-preview" style="display:none; margin-bottom:1.4rem;">
               <label style="font-size:0.85rem; font-weight:600; color:var(--text-muted); display:block; margin-bottom:0.5rem;">Shopping Cart Items</label>
               <div id="cart-items-content" style="background:rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:0.85rem 1rem; display:flex; flex-direction:column; gap:6px;"></div>
@@ -181,21 +216,26 @@
               <textarea id="project-notes" class="form-input" placeholder="Tell us about your brand colors, server ID, API needs, or hosting preference..."></textarea>
             </div>
 
-            <label style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.6rem;">Payment Method</label>
+            <!-- Payment Method Selector (bKash vs Bank Account) -->
+            <label style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0.6rem;">Select Payment Method</label>
             <div class="payment-options">
-              <div class="pay-method-card active" data-method="bKash / Nagad">
-                <span>📱</span> bKash / Nagad
+              <div class="pay-method-card active" data-method="bKash">
+                <div style="display:flex; align-items:center; gap:8px; font-weight:700; color:#fff; font-size:0.95rem;">
+                  <span>📱</span> bKash Transfer
+                </div>
+                <span style="font-size:0.75rem; color:var(--text-muted);">bKash to bKash • Card/Bank to bKash</span>
               </div>
-              <div class="pay-method-card" data-method="Crypto (USDT / LTC)">
-                <span>⚡</span> Crypto (USDT)
-              </div>
-              <div class="pay-method-card" data-method="PayPal">
-                <span>🅿️</span> PayPal
-              </div>
-              <div class="pay-method-card" data-method="Card / Stripe">
-                <span>💳</span> Credit Card
+
+              <div class="pay-method-card" data-method="Bank Account">
+                <div style="display:flex; align-items:center; gap:8px; font-weight:700; color:#fff; font-size:0.95rem;">
+                  <span>🏦</span> UCB Bank Account
+                </div>
+                <span style="font-size:0.75rem; color:var(--text-muted);">Bank to Bank • bKash/Card to Bank</span>
               </div>
             </div>
+
+            <!-- Dynamic Payment Account Details & Sub-Route Box -->
+            <div id="payment-instructions-box" class="pay-details-panel"></div>
 
             <!-- Mandatory Terms & Conditions + Privacy Policy Agreement -->
             <label class="legal-agree-box" for="agree-legal-checkbox">
@@ -253,7 +293,7 @@
             <span id="summary-price" style="color: var(--accent-cyan);">৳0 BDT</span>
           </div>
           <p style="font-size: 0.78rem; color: var(--text-muted); margin-top: 1rem; line-height: 1.4;">
-            Once confirmed, an invoice is generated in your profile and our team will reach out directly.
+            Once confirmed, an invoice is generated in your profile and our team will verify your transaction immediately.
           </p>
         </div>
       </div>
@@ -275,6 +315,20 @@
     import { populateServiceDropdown, allServices, getEnrichedService } from "./services.js";
     import { getCart, clearCart } from "./cart.js";
 
+    const PAYMENT_ACCOUNTS = {
+      bkash: {
+        number: "01768166414",
+        accountType: "Personal (Send Money)"
+      },
+      bank: {
+        bankName: "United Commercial Bank PLC (UCB)",
+        accountName: "Muntasir Shahriar Tonmoy",
+        accountNumber: "0663209001246842",
+        branchName: "Chuadanga Branch",
+        routingNumber: "245180134"
+      }
+    };
+
     // 1. Initialize EmailJS
     emailjs.init("YOUR_EMAILJS_PUBLIC_KEY");
 
@@ -286,6 +340,7 @@
     let currentUser = null;
     let baseSubtotal = 0;
     let appliedCoupon = null;
+    let selectedMethod = "bKash";
 
     const authAlert = document.getElementById("auth-alert");
     const serviceSelect = document.getElementById("order-service");
@@ -298,6 +353,117 @@
     const videoRefGroup = document.getElementById("video-reference-group");
     const videoRefInput = document.getElementById("video-reference-url");
     const legalCheckbox = document.getElementById("agree-legal-checkbox");
+    const payInstructionsBox = document.getElementById("payment-instructions-box");
+
+    // Render Dynamic bKash or UCB Bank Instructions + Verification Inputs
+    function renderPaymentInstructions(method) {
+      if (method === "bKash") {
+        payInstructionsBox.innerHTML = `
+          <div style="font-weight:700; color:#fff; font-size:0.95rem; margin-bottom:0.35rem;">
+            📱 bKash Payment Instructions
+          </div>
+          <p style="font-size:0.82rem; color:var(--text-muted); line-height:1.45; margin-bottom:0.75rem;">
+            Send the total payable amount via <strong>bKash-to-bKash (Send Money)</strong> or transfer directly from your <strong>Bank / Visa / Mastercard to bKash</strong> using the number below:
+          </p>
+
+          <div class="acc-copy-row">
+            <div>
+              <div style="font-size:0.72rem; color:var(--text-muted);">bKash Number (${PAYMENT_ACCOUNTS.bkash.accountType})</div>
+              <div style="font-family:monospace; font-size:1.05rem; font-weight:700; color:var(--accent-cyan);">${PAYMENT_ACCOUNTS.bkash.number}</div>
+            </div>
+            <button type="button" class="copy-mini-btn" data-copy="${PAYMENT_ACCOUNTS.bkash.number}">Copy Number</button>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.85rem; margin-top:1rem;">
+            <div>
+              <label for="transfer-route" style="display:block; font-size:0.78rem; color:var(--text-muted); margin-bottom:0.35rem;">Transfer Type *</label>
+              <select id="transfer-route" class="form-input" style="padding:0.65rem 0.75rem; font-size:0.85rem;" required>
+                <option value="bKash to bKash">bKash to bKash</option>
+                <option value="Card to bKash">Card to bKash</option>
+                <option value="Bank to bKash">Bank to bKash</option>
+              </select>
+            </div>
+            <div>
+              <label for="sender-account-info" style="display:block; font-size:0.78rem; color:var(--text-muted); margin-bottom:0.35rem;">Your Sender bKash / Card *</label>
+              <input type="text" id="sender-account-info" class="form-input" placeholder="e.g. 017XXXXXXXX" style="padding:0.65rem 0.75rem; font-size:0.85rem;" required>
+            </div>
+          </div>
+
+          <div style="margin-top:0.85rem;">
+            <label for="payment-trx-id" style="display:block; font-size:0.78rem; color:var(--text-muted); margin-bottom:0.35rem;">bKash Transaction ID (TrxID) *</label>
+            <input type="text" id="payment-trx-id" class="form-input" placeholder="e.g. BJK84920X1" style="padding:0.65rem 0.75rem; font-size:0.85rem; text-transform:uppercase;" required>
+          </div>
+        `;
+      } else {
+        payInstructionsBox.innerHTML = `
+          <div style="font-weight:700; color:#fff; font-size:0.95rem; margin-bottom:0.35rem;">
+            🏦 UCB Bank Account Transfer Instructions
+          </div>
+          <p style="font-size:0.82rem; color:var(--text-muted); line-height:1.45; margin-bottom:0.75rem;">
+            Transfer the total amount via <strong>Bank-to-Bank (NPSB / BEFTN / RTGS)</strong>, <strong>bKash-to-Bank</strong> (bKash App &rarr; Transfer Money &rarr; Bank Account), or <strong>Card-to-Bank</strong>:
+          </p>
+
+          <div class="acc-copy-row">
+            <div>
+              <div style="font-size:0.72rem; color:var(--text-muted);">Bank &amp; Account Name</div>
+              <div style="font-size:0.88rem; font-weight:700; color:#fff;">${PAYMENT_ACCOUNTS.bank.bankName}</div>
+              <div style="font-size:0.8rem; color:var(--text-muted);">A/C Name: <strong style="color:#fff;">${PAYMENT_ACCOUNTS.bank.accountName}</strong></div>
+            </div>
+          </div>
+
+          <div class="acc-copy-row">
+            <div>
+              <div style="font-size:0.72rem; color:var(--text-muted);">Account Number (${PAYMENT_ACCOUNTS.bank.branchName})</div>
+              <div style="font-family:monospace; font-size:1rem; font-weight:700; color:var(--accent-cyan);">066 3209 001246842</div>
+              <div style="font-size:0.74rem; color:var(--text-muted);">Routing No: ${PAYMENT_ACCOUNTS.bank.routingNumber}</div>
+            </div>
+            <button type="button" class="copy-mini-btn" data-copy="${PAYMENT_ACCOUNTS.bank.accountNumber}">Copy A/C</button>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.85rem; margin-top:1rem;">
+            <div>
+              <label for="transfer-route" style="display:block; font-size:0.78rem; color:var(--text-muted); margin-bottom:0.35rem;">Transfer Type *</label>
+              <select id="transfer-route" class="form-input" style="padding:0.65rem 0.75rem; font-size:0.85rem;" required>
+                <option value="Bank to Bank">Bank to Bank</option>
+                <option value="bKash to Bank">bKash to Bank</option>
+                <option value="Card to Bank">Card to Bank</option>
+              </select>
+            </div>
+            <div>
+              <label for="sender-account-info" style="display:block; font-size:0.78rem; color:var(--text-muted); margin-bottom:0.35rem;">Sender Bank / bKash / Card *</label>
+              <input type="text" id="sender-account-info" class="form-input" placeholder="e.g. UCB / City Bank / 017XXXX" style="padding:0.65rem 0.75rem; font-size:0.85rem;" required>
+            </div>
+          </div>
+
+          <div style="margin-top:0.85rem;">
+            <label for="payment-trx-id" style="display:block; font-size:0.78rem; color:var(--text-muted); margin-bottom:0.35rem;">Transaction / Reference ID *</label>
+            <input type="text" id="payment-trx-id" class="form-input" placeholder="e.g. NPSB938271 / TrxID" style="padding:0.65rem 0.75rem; font-size:0.85rem; text-transform:uppercase;" required>
+          </div>
+        `;
+      }
+
+      // Attach copy buttons
+      payInstructionsBox.querySelectorAll(".copy-mini-btn").forEach(btn => {
+        btn.onclick = () => {
+          const val = btn.getAttribute("data-copy");
+          navigator.clipboard.writeText(val);
+          const orig = btn.innerText;
+          btn.innerText = "Copied!";
+          setTimeout(() => { btn.innerText = orig; }, 1400);
+        };
+      });
+    }
+
+    renderPaymentInstructions("bKash");
+
+    document.querySelectorAll('.pay-method-card').forEach(card => {
+      card.onclick = () => {
+        document.querySelectorAll('.pay-method-card').forEach(c => c.classList.remove('active'));
+        card.classList.add('active');
+        selectedMethod = card.getAttribute('data-method');
+        renderPaymentInstructions(selectedMethod);
+      };
+    });
 
     const cart = getCart();
     populateServiceDropdown("order-service", false);
@@ -390,7 +556,7 @@
       updateSummary();
     }
 
-    // Apply Coupon Handler (Checks active, expiry, and maxUses limit)
+    // Apply Coupon Handler
     const couponInput = document.getElementById("coupon-input");
     const applyCouponBtn = document.getElementById("apply-coupon-btn");
     const couponFeedback = document.getElementById("coupon-feedback");
@@ -455,15 +621,6 @@
       }
     };
 
-    let selectedMethod = "bKash / Nagad";
-    document.querySelectorAll('.pay-method-card').forEach(card => {
-      card.onclick = () => {
-        document.querySelectorAll('.pay-method-card').forEach(c => c.classList.remove('active'));
-        card.classList.add('active');
-        selectedMethod = card.getAttribute('data-method');
-      };
-    });
-
     async function deductStock(itemsToDeduct) {
       for (const item of itemsToDeduct) {
         if (!item.id) continue;
@@ -487,7 +644,6 @@
     document.getElementById('order-form').onsubmit = async (e) => {
       e.preventDefault();
 
-      // Strict check: Prevent order placement unless Terms & Privacy checkbox is ticked
       if (!legalCheckbox.checked) {
         alert("Please tick the checkbox to agree to our Terms & Conditions and Privacy Policy before placing your order.");
         legalCheckbox.focus();
@@ -533,6 +689,11 @@
 
       const { discountValue, finalTotal } = recalculateTotals();
       const phoneNumber = document.getElementById('contact-phone').value.trim() || "N/A";
+      const transferRoute = document.getElementById('transfer-route')?.value || selectedMethod;
+      const senderAccount = document.getElementById('sender-account-info')?.value.trim() || "N/A";
+      const transactionId = document.getElementById('payment-trx-id')?.value.trim().toUpperCase() || "N/A";
+      const paymentSummaryLabel = `${selectedMethod} (${transferRoute})`;
+
       const videoRefUrl = videoRefInput.value.trim();
       const rawNotes = document.getElementById('project-notes').value.trim() || "None";
       const notes = videoRefUrl ? `[Reference Video: ${videoRefUrl}]\n${rawNotes}` : rawNotes;
@@ -549,7 +710,10 @@
           couponUsed: appliedCoupon ? appliedCoupon.code : null,
           discountBDT: discountValue,
           totalBDT: finalTotal,
-          paymentMethod: selectedMethod,
+          paymentMethod: paymentSummaryLabel,
+          transferRoute: transferRoute,
+          senderAccount: senderAccount,
+          transactionId: transactionId,
           phoneNumber: phoneNumber,
           referenceVideoUrl: videoRefUrl || null,
           agreedToTerms: true,
@@ -560,7 +724,6 @@
 
         await deductStock(orderItems);
 
-        // Increment Coupon Usage Count if a coupon was applied
         if (appliedCoupon && appliedCoupon.docId) {
           try {
             await updateDoc(doc(db, "coupons", appliedCoupon.docId), {
@@ -572,14 +735,16 @@
         }
 
         const couponNote = appliedCoupon ? `\nCoupon Applied: ${appliedCoupon.code} (-৳${discountValue.toLocaleString()} BDT)` : "";
+        const paymentAuditNote = `\nPayment Route: ${paymentSummaryLabel}\nSender Account: ${senderAccount}\nTransaction ID: ${transactionId}`;
+
         const emailParams = {
           invoice_number: invoiceNumber,
           customer_name: customerName,
           customer_email: currentUser.email,
           discord_handle: phoneNumber,
-          payment_method: selectedMethod,
+          payment_method: paymentSummaryLabel,
           total_amount: `৳${finalTotal.toLocaleString()} BDT`,
-          order_items: orderItems.map(i => `- ${i.name} (${i.quantity}x) = ৳${(i.price * i.quantity).toLocaleString()} BDT`).join("\n") + couponNote,
+          order_items: orderItems.map(i => `- ${i.name} (${i.quantity}x) = ৳${(i.price * i.quantity).toLocaleString()} BDT`).join("\n") + couponNote + paymentAuditNote,
           project_notes: notes
         };
 
