@@ -81,7 +81,6 @@
       transition: border-color 0.3s ease, background-color 0.3s ease;
     }
 
-    /* Admin Live Support Chat Layout */
     .admin-chat-grid {
       display: grid;
       grid-template-columns: 320px 1fr;
@@ -168,7 +167,6 @@
   </style>
 </head>
 <body>
-  <!-- High-Tech Preloader -->
   <div id="preloader">
     <div class="loader-content">
       <div class="loader-ring"></div>
@@ -290,12 +288,12 @@
 
         <!-- Coupons & Generator Section -->
         <div id="tab-coupons" class="card" style="padding: 1.8rem; display:none;">
-          <h3 style="font-size:1.2rem; margin-bottom:0.4rem;">Coupon Generator & Promo Codes</h3>
+          <h3 style="font-size:1.2rem; margin-bottom:0.4rem;">Coupon Generator & Usage Limits</h3>
           <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1.5rem;">
-            Create custom or auto-generated promo codes that clients can apply at checkout.
+            Create promo codes with optional max usage limits (leave Max Uses blank or 0 for unlimited) and monitor live redemption stats.
           </p>
 
-          <form id="coupon-create-form" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:1rem; align-items:end; background:rgba(255,255,255,0.02); padding:1.25rem; border-radius:14px; border:1px solid var(--card-border); margin-bottom:2rem;">
+          <form id="coupon-create-form" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(165px, 1fr)); gap:1rem; align-items:end; background:rgba(255,255,255,0.02); padding:1.25rem; border-radius:14px; border:1px solid var(--card-border); margin-bottom:2rem;">
             <div>
               <label style="display:block; font-size:0.8rem; color:var(--text-muted); margin-bottom:0.4rem;">Coupon Code</label>
               <div style="display:flex; gap:6px;">
@@ -318,6 +316,11 @@
             </div>
 
             <div>
+              <label style="display:block; font-size:0.8rem; color:var(--text-muted); margin-bottom:0.4rem;">Max Uses (0 = ∞)</label>
+              <input type="number" id="new-coupon-max-uses" class="form-input" placeholder="e.g. 10" min="0" style="padding:0.65rem 0.8rem;">
+            </div>
+
+            <div>
               <label style="display:block; font-size:0.8rem; color:var(--text-muted); margin-bottom:0.4rem;">Expiry Date (Optional)</label>
               <input type="date" id="new-coupon-expiry" class="form-input" style="padding:0.65rem 0.8rem;">
             </div>
@@ -333,6 +336,9 @@
                 <tr>
                   <th>Code</th>
                   <th>Discount</th>
+                  <th>Used</th>
+                  <th>Uses Left</th>
+                  <th>Total Max Uses</th>
                   <th>Expires</th>
                   <th>Status</th>
                   <th>Actions</th>
@@ -496,6 +502,7 @@
       const code = document.getElementById("new-coupon-code").value.trim().toUpperCase();
       const type = document.getElementById("new-coupon-type").value;
       const value = Number(document.getElementById("new-coupon-value").value);
+      const maxUses = Math.max(0, Math.floor(Number(document.getElementById("new-coupon-max-uses").value) || 0));
       const expiryDate = document.getElementById("new-coupon-expiry").value || null;
       const btn = document.getElementById("save-coupon-btn");
 
@@ -508,6 +515,8 @@
           code,
           type,
           value,
+          maxUses,
+          usedCount: 0,
           expiryDate,
           active: true,
           createdAt: serverTimestamp()
@@ -567,7 +576,7 @@
     let allTickets = [];
 
     function listenToAdminData() {
-      // Support Tickets Listener (Grouped by User Name & Category)
+      // Support Tickets Listener
       onSnapshot(query(collection(db, "support_tickets"), orderBy("updatedAt", "desc")), (snap) => {
         allTickets = [];
         let unreadCount = 0;
@@ -659,20 +668,32 @@
         });
       });
 
-      // Coupons Listener
+      // Coupons Listener (With Used Count, Uses Left & Editable Total Max Uses)
       onSnapshot(query(collection(db, "coupons"), orderBy("createdAt", "desc")), (snap) => {
         const tbody = document.getElementById("admin-coupons-body");
-        tbody.innerHTML = snap.empty ? `<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:1.5rem;">No coupons created yet.</td></tr>` : "";
+        tbody.innerHTML = snap.empty ? `<tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:1.5rem;">No coupons created yet.</td></tr>` : "";
 
         snap.forEach(d => {
           const c = { id: d.id, ...d.data() };
           const isActive = c.active !== false;
           const label = c.type === "fixed" ? `৳${Number(c.value).toLocaleString()} BDT OFF` : `${c.value}% OFF`;
+          const usedCount = Number(c.usedCount) || 0;
+          const maxUses = Number(c.maxUses) || 0;
+          const usesLeft = maxUses > 0 ? Math.max(0, maxUses - usedCount) : "∞";
+          const exhausted = maxUses > 0 && usedCount >= maxUses;
 
           tbody.insertAdjacentHTML("beforeend", `
             <tr>
               <td style="font-family:monospace; font-size:0.95rem; font-weight:700; color:var(--accent-cyan);">${c.code}</td>
               <td><strong>${label}</strong></td>
+              <td style="font-weight:600; color:#fff;">${usedCount}</td>
+              <td style="font-weight:700; color:${exhausted ? '#f87171' : '#34d399'};">${usesLeft}</td>
+              <td>
+                <div style="display:flex; align-items:center; gap:5px;">
+                  <input type="number" class="form-input max-uses-input" data-id="${c.id}" value="${maxUses}" min="0" title="0 = Unlimited" style="width:72px; padding:0.3rem 0.45rem; font-size:0.8rem;">
+                  <button class="btn btn-secondary save-max-uses-btn" data-id="${c.id}" style="padding:0.28rem 0.55rem; font-size:0.72rem;">Set</button>
+                </div>
+              </td>
               <td style="color:var(--text-muted);">${c.expiryDate || "No Expiry"}</td>
               <td>
                 <button class="btn btn-secondary toggle-coupon-btn" data-id="${c.id}" data-active="${isActive}" style="padding:0.25rem 0.65rem; font-size:0.75rem; color:${isActive ? '#34d399' : '#fbbf24'}; border-color:${isActive ? 'rgba(52,211,153,0.3)' : 'rgba(251,191,36,0.3)'};">
@@ -684,6 +705,26 @@
               </td>
             </tr>
           `);
+        });
+
+        tbody.querySelectorAll(".save-max-uses-btn").forEach(btn => {
+          btn.onclick = async () => {
+            const id = btn.getAttribute("data-id");
+            const input = btn.closest("td").querySelector(".max-uses-input");
+            const newMax = Math.max(0, Math.floor(Number(input.value) || 0));
+            btn.disabled = true;
+            btn.innerText = "...";
+            try {
+              await updateDoc(doc(db, "coupons", id), { maxUses: newMax });
+              btn.innerText = "✓";
+              setTimeout(() => { btn.innerText = "Set"; }, 1000);
+            } catch (err) {
+              alert("Failed to update max uses: " + err.message);
+              btn.innerText = "Set";
+            } finally {
+              btn.disabled = false;
+            }
+          };
         });
 
         tbody.querySelectorAll(".toggle-coupon-btn").forEach(btn => {
@@ -713,12 +754,16 @@
           const items = ord.items ? ord.items.map(i => i.name).join(", ") : (ord.servicePlan || "Custom Service");
           const currentStatus = ord.status || "Pending";
           const couponBadge = ord.couponUsed ? `<div style="font-size:0.72rem; color:#34d399;">Code: ${ord.couponUsed}</div>` : "";
+          const refLink = ord.referenceVideoUrl ? `<div><a href="${ord.referenceVideoUrl}" target="_blank" rel="noopener noreferrer" style="font-size:0.74rem; color:var(--accent-cyan); text-decoration:underline;">🎬 Reference Video</a></div>` : "";
 
           tbody.insertAdjacentHTML("beforeend", `
             <tr>
               <td style="color:var(--accent-cyan); font-weight:600;">${ord.invoiceNumber || "N/A"}</td>
               <td>${ord.userName || ord.userEmail}</td>
-              <td style="max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${items}">${items}</td>
+              <td style="max-width:210px;">
+                <div style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${items}">${items}</div>
+                ${refLink}
+              </td>
               <td>৳${(ord.totalBDT || ord.priceUSD || 0).toLocaleString()}${couponBadge}</td>
               <td>${ord.phoneNumber || ord.discordHandle || "N/A"}</td>
               <td>
