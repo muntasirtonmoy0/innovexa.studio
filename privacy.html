@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Innovexa Studio | Privacy Policy</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    .legal-doc h2 {
+      font-size: 1.25rem;
+      color: #fff;
+      margin: 1.75rem 0 0.6rem;
+    }
+    .legal-doc p, .legal-doc li {
+      color: var(--text-muted);
+      font-size: 0.94rem;
+      line-height: 1.7;
+    }
+    .legal-doc ul {
+      padding-left: 1.25rem;
+      margin-bottom: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div id="preloader">
+    <div class="loader-content">
+      <div class="loader-ring"></div>
+      <div class="loader-brand"><span class="brand-dot"></span>Innovexa Studio</div>
+      <div class="loader-bar-wrap"><div class="loader-bar-fill"></div></div>
+    </div>
+  </div>
+
+  <div id="cursor-glow"></div>
+  <canvas id="bg-canvas"></canvas>
+  <div class="ambient-glow"></div>
+
+  <div id="navbar-placeholder"></div>
+
+  <main>
+    <section class="hero reveal" style="min-height: 22vh; padding-top: 1.5rem; padding-bottom: 0.5rem;">
+      <div class="badge">Data Protection & Security</div>
+      <h1>Privacy <span class="gradient-text">Policy</span></h1>
+      <p>Effective Date: November 2026 • How Innovexa Studio collects, uses, and protects your data.</p>
+    </section>
+
+    <section class="container reveal">
+      <div class="card legal-doc" style="padding: 2.5rem; max-width: 880px; margin: 0 auto;">
+        <p>
+          <strong>Innovexa Studio</strong> respects your privacy and is committed to safeguarding the personal and project data you share when using our website, client portal, and support chat.
+        </p>
+
+        <h2>1. Information We Collect</h2>
+        <ul>
+          <li><strong>Account Information:</strong> Name, email address, and authentication identifiers provided when you sign up or log in via Firebase Authentication.</li>
+          <li><strong>Order & Contact Details:</strong> Phone/WhatsApp numbers, project notes, reference video URLs, selected services, and invoice records submitted during checkout.</li>
+          <li><strong>Support & Community Submissions:</strong> Messages sent in our Live Support Chat, client reviews, and uploaded showcase images.</li>
+        </ul>
+
+        <h2>2. How We Use Your Information</h2>
+        <ul>
+          <li>To process orders, generate printable invoices, and send automated order confirmations via EmailJS.</li>
+          <li>To communicate directly with you regarding project progress, deployment setup, and customer support tickets.</li>
+          <li>To validate promotional coupons, manage service availability, and prevent fraudulent checkout activity.</li>
+        </ul>
+
+        <h2>3. Third-Party Infrastructure & Storage</h2>
+        <p>
+          We rely on trusted industry infrastructure to store and process data securely:
+        </p>
+        <ul>
+          <li><strong>Google Firebase (Auth & Firestore):</strong> Used for encrypted account login, real-time order tracking, and support chat storage.</li>
+          <li><strong>Cloudinary CDN:</strong> Used for hosting uploaded review photos and showcase media.</li>
+          <li><strong>EmailJS:</strong> Used exclusively to dispatch transactional invoice and order confirmation emails.</li>
+        </ul>
+
+        <h2>4. Data Sharing & Confidentiality</h2>
+        <p>
+          We never sell, rent, or trade your personal information, email address, or phone number to third parties. Project credentials (such as bot tokens, hosting logins, or API keys shared during setup) are treated as strictly confidential.
+        </p>
+
+        <h2>5. Your Rights & Data Deletion</h2>
+        <p>
+          You may view your order history and profile metadata anytime from your <a href="profile.html" style="color: var(--accent-cyan);">Client Profile</a>. To request modification or permanent deletion of your account data, contact us through our <a href="support.html" style="color: var(--accent-cyan);">Support Page</a> or at <a href="mailto:muntasirtonmoy10@gmail.com" style="color: var(--accent-cyan);">muntasirtonmoy10@gmail.com</a>.
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2026 Innovexa Studio. All rights reserved. • <a href="terms.html" style="color:var(--accent-cyan);">Terms & Conditions</a> • <a href="privacy.html" style="color:var(--accent-cyan);">Privacy Policy</a></p>
+  </footer>
+
+  <script src="app.js"></script>
+  <script src="navbar.js"></script>
+  <script type="module" src="cart.js"></script>
+  <script type="module" src="auth-modal.js"></script>
+</body>
+</html>
