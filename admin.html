@@ -164,6 +164,94 @@
       color: #fff;
     }
 
+    /* Custom Centered Admin Confirmation & Status Modal */
+    .admin-dialog-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 7, 12, 0.82);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      z-index: 100000;
+      align-items: center;
+      justify-content: center;
+      padding: 1.25rem;
+      animation: adminFadeIn 0.22s ease forwards;
+    }
+
+    .admin-dialog-card {
+      width: 100%;
+      max-width: 420px;
+      background: linear-gradient(165deg, rgba(22, 25, 40, 0.97), rgba(11, 13, 22, 0.99));
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      border-radius: 22px;
+      padding: 2.2rem 1.85rem;
+      text-align: center;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65), 0 0 35px rgba(56, 189, 248, 0.12);
+      animation: adminPopIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .admin-dialog-icon {
+      width: 62px;
+      height: 62px;
+      margin: 0 auto 1.15rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.75rem;
+    }
+
+    .admin-dialog-icon.danger {
+      background: rgba(239, 68, 68, 0.14);
+      border: 2px solid rgba(239, 68, 68, 0.45);
+      color: #f87171;
+      box-shadow: 0 0 22px rgba(239, 68, 68, 0.2);
+    }
+
+    .admin-dialog-icon.success {
+      background: rgba(52, 211, 153, 0.14);
+      border: 2px solid rgba(52, 211, 153, 0.45);
+      color: #34d399;
+      box-shadow: 0 0 22px rgba(52, 211, 153, 0.2);
+    }
+
+    .admin-dialog-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 1.5rem;
+    }
+
+    .admin-dialog-actions button {
+      flex: 1;
+      padding: 0.8rem 1rem;
+      font-size: 0.9rem;
+    }
+
+    .btn-danger-solid {
+      background: linear-gradient(135deg, #dc2626, #ef4444);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+
+    .btn-danger-solid:hover {
+      opacity: 0.92;
+    }
+
+    @keyframes adminFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes adminPopIn {
+      from { opacity: 0; transform: scale(0.92) translateY(12px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
     @media (max-width: 840px) {
       .admin-chat-grid {
         grid-template-columns: 1fr;
@@ -463,6 +551,19 @@
     </div>
   </div>
 
+  <!-- Custom Centered Admin Confirmation & Status Modal -->
+  <div id="admin-dialog-modal" class="admin-dialog-overlay">
+    <div class="admin-dialog-card">
+      <div id="admin-dialog-icon" class="admin-dialog-icon danger">🗑️</div>
+      <h3 id="admin-dialog-title" style="font-size:1.35rem; font-weight:800; color:#fff; margin-bottom:0.4rem;">Confirm Action</h3>
+      <p id="admin-dialog-message" style="font-size:0.88rem; color:var(--text-muted); line-height:1.5;"></p>
+      <div class="admin-dialog-actions">
+        <button type="button" id="admin-dialog-cancel-btn" class="btn btn-secondary">Cancel</button>
+        <button type="button" id="admin-dialog-confirm-btn" class="btn-danger-solid">Confirm</button>
+      </div>
+    </div>
+  </div>
+
   <script src="app.js"></script>
   <script src="navbar.js"></script>
   <script type="module" src="cart.js"></script>
@@ -485,6 +586,46 @@
     const adminInvModal = document.getElementById("admin-invoice-modal");
     const adminInvContent = document.getElementById("admin-invoice-content");
     document.getElementById("admin-inv-close-btn").onclick = () => adminInvModal.style.display = "none";
+
+    // Custom Centered Dialog Helper (Replaces native browser confirm() & alert())
+    const dialogModal = document.getElementById("admin-dialog-modal");
+    const dialogIcon = document.getElementById("admin-dialog-icon");
+    const dialogTitle = document.getElementById("admin-dialog-title");
+    const dialogMessage = document.getElementById("admin-dialog-message");
+    const dialogCancelBtn = document.getElementById("admin-dialog-cancel-btn");
+    const dialogConfirmBtn = document.getElementById("admin-dialog-confirm-btn");
+
+    function showAdminDialog({ title, message, confirmText = "Confirm", cancelText = "Cancel", type = "danger", showCancel = true }) {
+      return new Promise((resolve) => {
+        dialogTitle.innerText = title;
+        dialogMessage.innerText = message;
+        dialogConfirmBtn.innerText = confirmText;
+        dialogCancelBtn.innerText = cancelText;
+        dialogCancelBtn.style.display = showCancel ? "inline-flex" : "none";
+
+        if (type === "success") {
+          dialogIcon.className = "admin-dialog-icon success";
+          dialogIcon.innerText = "✓";
+          dialogConfirmBtn.className = "btn btn-primary";
+        } else {
+          dialogIcon.className = "admin-dialog-icon danger";
+          dialogIcon.innerText = "!";
+          dialogConfirmBtn.className = "btn-danger-solid";
+        }
+
+        dialogModal.style.display = "flex";
+
+        const cleanup = (result) => {
+          dialogModal.style.display = "none";
+          dialogConfirmBtn.onclick = null;
+          dialogCancelBtn.onclick = null;
+          resolve(result);
+        };
+
+        dialogConfirmBtn.onclick = () => cleanup(true);
+        dialogCancelBtn.onclick = () => cleanup(false);
+      });
+    }
 
     // Tab switcher
     const allTabs = ["orders", "support", "stock", "coupons", "reviews", "gallery", "upload"];
@@ -548,7 +689,13 @@
         });
         document.getElementById("coupon-create-form").reset();
       } catch (err) {
-        alert("Failed to create coupon: " + err.message);
+        await showAdminDialog({
+          title: "Failed to Create Coupon",
+          message: err.message,
+          confirmText: "OK",
+          type: "danger",
+          showCancel: false
+        });
       } finally {
         btn.disabled = false;
         btn.innerText = "+ Create Coupon";
@@ -585,10 +732,22 @@
         });
 
         uploadForm.reset();
-        alert("Showcase uploaded and published to gallery!");
+        await showAdminDialog({
+          title: "Published to Gallery!",
+          message: "Your showcase item has been uploaded and published live on the website.",
+          confirmText: "View in Gallery",
+          type: "success",
+          showCancel: false
+        });
         document.querySelector('.admin-tab[data-tab="gallery"]').click();
       } catch (err) {
-        alert("Upload error: " + err.message);
+        await showAdminDialog({
+          title: "Upload Error",
+          message: err.message,
+          confirmText: "Close",
+          type: "danger",
+          showCancel: false
+        });
       } finally {
         uploadBtn.disabled = false;
         uploadBtn.innerText = "Upload & Publish Immediately";
@@ -779,7 +938,13 @@
               btn.innerText = "Saved!";
               setTimeout(() => { btn.innerText = "Save"; }, 1200);
             } catch (err) {
-              alert("Failed to update product: " + err.message);
+              await showAdminDialog({
+                title: "Update Failed",
+                message: err.message,
+                confirmText: "OK",
+                type: "danger",
+                showCancel: false
+              });
               btn.innerText = "Save";
             } finally {
               btn.disabled = false;
@@ -839,7 +1004,13 @@
               btn.innerText = "✓";
               setTimeout(() => { btn.innerText = "Set"; }, 1000);
             } catch (err) {
-              alert("Failed to update max uses: " + err.message);
+              await showAdminDialog({
+                title: "Update Failed",
+                message: err.message,
+                confirmText: "OK",
+                type: "danger",
+                showCancel: false
+              });
               btn.innerText = "Set";
             } finally {
               btn.disabled = false;
@@ -857,7 +1028,13 @@
 
         tbody.querySelectorAll(".delete-coupon-btn").forEach(btn => {
           btn.onclick = async () => {
-            if (confirm("Delete this coupon permanently?")) {
+            const confirmed = await showAdminDialog({
+              title: "Delete Coupon?",
+              message: "Are you sure you want to delete this promo code permanently?",
+              confirmText: "Delete Coupon",
+              type: "danger"
+            });
+            if (confirmed) {
               await deleteDoc(doc(db, "coupons", btn.getAttribute("data-id")));
             }
           };
@@ -935,7 +1112,13 @@
               sel.style.borderColor = "var(--accent-green)";
               setTimeout(() => { sel.style.borderColor = "var(--card-border)"; }, 1200);
             } catch (err) {
-              alert("Firestore permission error: " + err.message);
+              await showAdminDialog({
+                title: "Permission Error",
+                message: err.message,
+                confirmText: "OK",
+                type: "danger",
+                showCancel: false
+              });
               sel.value = prevStatus;
             } finally {
               sel.disabled = false;
@@ -945,11 +1128,23 @@
 
         tbody.querySelectorAll(".delete-order-btn").forEach(btn => {
           btn.onclick = async () => {
-            if (confirm("Delete this order record permanently?")) {
+            const confirmed = await showAdminDialog({
+              title: "Delete Order Record?",
+              message: "This invoice and order record will be permanently removed from Firestore.",
+              confirmText: "Delete Order",
+              type: "danger"
+            });
+            if (confirmed) {
               try {
                 await deleteDoc(doc(db, "orders", btn.getAttribute("data-id")));
               } catch (err) {
-                alert("Failed to delete: " + err.message);
+                await showAdminDialog({
+                  title: "Delete Failed",
+                  message: err.message,
+                  confirmText: "OK",
+                  type: "danger",
+                  showCancel: false
+                });
               }
             }
           };
@@ -980,11 +1175,23 @@
 
         tbody.querySelectorAll(".delete-rev-btn").forEach(btn => {
           btn.onclick = async () => {
-            if (confirm("Delete this review from the public website?")) {
+            const confirmed = await showAdminDialog({
+              title: "Remove Review?",
+              message: "Are you sure you want to delete this client review from the public website?",
+              confirmText: "Remove Review",
+              type: "danger"
+            });
+            if (confirmed) {
               try {
                 await deleteDoc(doc(db, "reviews", btn.getAttribute("data-id")));
               } catch (err) {
-                alert("Failed to remove review: " + err.message);
+                await showAdminDialog({
+                  title: "Remove Failed",
+                  message: err.message,
+                  confirmText: "OK",
+                  type: "danger",
+                  showCancel: false
+                });
               }
             }
           };
@@ -1013,11 +1220,23 @@
 
         tbody.querySelectorAll(".delete-gal-btn").forEach(btn => {
           btn.onclick = async () => {
-            if (confirm("Remove this item from the gallery permanently?")) {
+            const confirmed = await showAdminDialog({
+              title: "Delete Gallery Item?",
+              message: "This showcase item will be permanently removed from the public gallery.",
+              confirmText: "Delete Item",
+              type: "danger"
+            });
+            if (confirmed) {
               try {
                 await deleteDoc(doc(db, "gallery", btn.getAttribute("data-id")));
               } catch (err) {
-                alert("Failed to delete gallery item: " + err.message);
+                await showAdminDialog({
+                  title: "Delete Failed",
+                  message: err.message,
+                  confirmText: "OK",
+                  type: "danger",
+                  showCancel: false
+                });
               }
             }
           };
@@ -1120,7 +1339,13 @@
 
     document.getElementById("admin-del-ticket-btn").onclick = async () => {
       if (!selectedTicketId) return;
-      if (confirm("Delete this support conversation permanently?")) {
+      const confirmed = await showAdminDialog({
+        title: "Delete Support Conversation?",
+        message: "This entire chat history with the client will be deleted permanently.",
+        confirmText: "Delete Chat",
+        type: "danger"
+      });
+      if (confirmed) {
         const idToDelete = selectedTicketId;
         selectedTicketId = null;
         if (unsubTicketMsgs) unsubTicketMsgs();
