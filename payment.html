@@ -754,7 +754,7 @@
           if (!window.emailjs) {
             throw new Error("EmailJS library failed to load (check ad-blocker or internet connection).");
           }
-          await emailjs.send("service_u1vtxpf", "k6vtwwo", emailParams);
+          await emailjs.send("service_u1vtxpf", "template_tmzb9qh", emailParams);
         } catch (mailErr) {
           console.error("EmailJS Error:", mailErr);
           alert("Order saved, but EmailJS failed: " + (mailErr.text || mailErr.message || JSON.stringify(mailErr)));
