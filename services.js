@@ -65,15 +65,15 @@ function drawCards(containerId, servicesList) {
 
     let stockBadge = "";
     if (!s.inStock) {
-      stockBadge = `<span style="font-size:0.72rem; padding:0.2rem 0.55rem; border-radius:99px; background:rgba(239,68,68,0.12); color:#dc2626; border:1px solid rgba(239,68,68,0.3); font-weight:700;">● Out of Stock (0)</span>`;
+      stockBadge = `<span style="font-size:0.72rem; padding:0.2rem 0.55rem; border-radius:99px; background:rgba(239,68,68,0.15); color:#f87171; border:1px solid rgba(239,68,68,0.3); font-weight:600;">● Out of Stock (0)</span>`;
     } else if (s.stockCount <= 3) {
-      stockBadge = `<span style="font-size:0.72rem; padding:0.2rem 0.55rem; border-radius:99px; background:rgba(245,158,11,0.14); color:#d97706; border:1px solid rgba(245,158,11,0.35); font-weight:700;">● Only ${s.stockCount} Left</span>`;
+      stockBadge = `<span style="font-size:0.72rem; padding:0.2rem 0.55rem; border-radius:99px; background:rgba(251,191,36,0.15); color:#fbbf24; border:1px solid rgba(251,191,36,0.35); font-weight:600;">● Only ${s.stockCount} Left</span>`;
     } else {
-      stockBadge = `<span style="font-size:0.72rem; padding:0.2rem 0.55rem; border-radius:99px; background:rgba(5,150,105,0.12); color:#059669; border:1px solid rgba(5,150,105,0.3); font-weight:700;">● In Stock (${s.stockCount})</span>`;
+      stockBadge = `<span style="font-size:0.72rem; padding:0.2rem 0.55rem; border-radius:99px; background:rgba(52,211,153,0.12); color:#34d399; border:1px solid rgba(52,211,153,0.3); font-weight:600;">● In Stock (${s.stockCount})</span>`;
     }
 
     const discountBadge = s.discountPercent > 0
-      ? `<span style="font-size:0.72rem; padding:0.2rem 0.55rem; border-radius:99px; background:rgba(37,99,235,0.12); color:#2563eb; border:1px solid rgba(37,99,235,0.35); font-weight:700;">${s.discountPercent}% OFF</span>`
+      ? `<span style="font-size:0.72rem; padding:0.2rem 0.55rem; border-radius:99px; background:rgba(56,189,248,0.15); color:var(--accent-cyan); border:1px solid rgba(56,189,248,0.35); font-weight:700;">${s.discountPercent}% OFF</span>`
       : ``;
 
     const priceMarkup = s.discountPercent > 0
@@ -126,6 +126,7 @@ function drawCards(containerId, servicesList) {
       if (raw) {
         const enriched = getEnrichedService(raw);
         if (!enriched.inStock) {
+          alert("Sorry, this item is currently out of stock.");
           return;
         }
         addToCart(enriched);
