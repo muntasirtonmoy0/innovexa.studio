@@ -138,6 +138,71 @@
       flex-shrink: 0;
     }
 
+    /* Custom Centered Order Confirmation Modal */
+    .order-success-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 7, 12, 0.82);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      z-index: 99999;
+      align-items: center;
+      justify-content: center;
+      padding: 1.25rem;
+      animation: fadeOverlay 0.25s ease forwards;
+    }
+
+    .order-success-card {
+      width: 100%;
+      max-width: 440px;
+      background: linear-gradient(165deg, rgba(22, 25, 40, 0.96), rgba(11, 13, 22, 0.98));
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      border-radius: 24px;
+      padding: 2.4rem 2rem;
+      text-align: center;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65), 0 0 35px rgba(56, 189, 248, 0.14);
+      animation: popModal 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .success-check-ring {
+      width: 68px;
+      height: 68px;
+      margin: 0 auto 1.25rem;
+      border-radius: 50%;
+      background: rgba(52, 211, 153, 0.14);
+      border: 2px solid rgba(52, 211, 153, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      color: #34d399;
+      box-shadow: 0 0 25px rgba(52, 211, 153, 0.25);
+    }
+
+    .invoice-pill-display {
+      display: inline-block;
+      padding: 0.45rem 1rem;
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-radius: 10px;
+      font-family: monospace;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--accent-cyan);
+      margin: 0.75rem 0 1.25rem;
+    }
+
+    @keyframes fadeOverlay {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes popModal {
+      from { opacity: 0; transform: scale(0.92) translateY(14px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
     @media (max-width: 820px) {
       .payment-layout { grid-template-columns: 1fr; }
       .payment-options { grid-template-columns: 1fr; }
@@ -300,6 +365,21 @@
     </div>
   </main>
 
+  <!-- Centered Order Confirmed Modal -->
+  <div id="order-success-modal" class="order-success-overlay">
+    <div class="order-success-card">
+      <div class="success-check-ring">✓</div>
+      <h2 style="font-size: 1.5rem; font-weight: 800; color: #fff; margin-bottom: 0.35rem;">Order Confirmed!</h2>
+      <p style="font-size: 0.88rem; color: var(--text-muted); line-height: 1.5;">
+        Your order has been placed and your invoice receipt has been sent to your email.
+      </p>
+      <div id="modal-invoice-code" class="invoice-pill-display">INV-2026-00000</div>
+      <button type="button" id="go-to-profile-btn" class="btn btn-primary" style="width: 100%; padding: 0.9rem 1.2rem; font-size: 0.95rem;">
+        Check Status in Profile &rarr;
+      </button>
+    </div>
+  </div>
+
   <footer>
     <p>&copy; 2026 Innovexa Studio. All rights reserved. • <a href="terms.html" style="color:var(--text-muted);">Terms &amp; Conditions</a> • <a href="privacy.html" style="color:var(--text-muted);">Privacy Policy</a></p>
   </footer>
@@ -330,7 +410,9 @@
     };
 
     // 1. Initialize EmailJS
-    emailjs.init("mNj8XamWxOGGYizLQ");
+    if (window.emailjs) {
+      emailjs.init({ publicKey: "mNj8XamWxOGGYizLQ" });
+    }
 
     // 2. Generate Unique Invoice Number
     const randomCode = Math.floor(10000 + Math.random() * 90000);
@@ -354,6 +436,13 @@
     const videoRefInput = document.getElementById("video-reference-url");
     const legalCheckbox = document.getElementById("agree-legal-checkbox");
     const payInstructionsBox = document.getElementById("payment-instructions-box");
+
+    // Success Modal Controls
+    const successModal = document.getElementById("order-success-modal");
+    const modalInvoiceCode = document.getElementById("modal-invoice-code");
+    document.getElementById("go-to-profile-btn").onclick = () => {
+      window.location.href = "profile.html";
+    };
 
     // Render Dynamic bKash or UCB Bank Instructions + Verification Inputs
     function renderPaymentInstructions(method) {
@@ -645,7 +734,6 @@
       e.preventDefault();
 
       if (!legalCheckbox.checked) {
-        alert("Please tick the checkbox to agree to our Terms & Conditions and Privacy Policy before placing your order.");
         legalCheckbox.focus();
         return;
       }
@@ -674,7 +762,6 @@
       } else {
         const opt = serviceSelect.options[serviceSelect.selectedIndex];
         if (opt.disabled) {
-          alert("This selected service is currently out of stock.");
           btn.disabled = false;
           btn.innerText = "Confirm & Request Invoice";
           return;
@@ -748,16 +835,21 @@
           project_notes: notes
         };
 
-        await emailjs.send("service_u1vtxpf", "template_tmzb9qh", emailParams);
+        try {
+          if (window.emailjs) {
+            await emailjs.send("service_u1vtxpf", "template_tmzb9qh", emailParams);
+          }
+        } catch (mailErr) {
+          console.error("EmailJS Error:", mailErr);
+        }
 
         if (isCartCheckout) clearCart();
-        alert(`Order confirmed! Your Invoice #${invoiceNumber} is created.`);
-        window.location.href = "profile.html";
+
+        // Show Centered Custom Confirmation Modal instead of browser alert()
+        modalInvoiceCode.innerText = invoiceNumber;
+        successModal.style.display = "flex";
       } catch (err) {
         console.error("Order completion error:", err);
-        if (isCartCheckout) clearCart();
-        window.location.href = "profile.html";
-      } finally {
         btn.disabled = false;
         btn.innerText = "Confirm & Request Invoice";
       }
