@@ -330,7 +330,7 @@
     };
 
     // 1. Initialize EmailJS
-    emailjs.init("YOUR_EMAILJS_PUBLIC_KEY");
+    emailjs.init("mNj8XamWxOGGYizLQ");
 
     // 2. Generate Unique Invoice Number
     const randomCode = Math.floor(10000 + Math.random() * 90000);
@@ -748,7 +748,7 @@
           project_notes: notes
         };
 
-        await emailjs.send("YOUR_SERVICE_ID", "k6vtwwo", emailParams);
+        await emailjs.send("service_u1vtxpf", "k6vtwwo", emailParams);
 
         if (isCartCheckout) clearCart();
         alert(`Order confirmed! Your Invoice #${invoiceNumber} is created.`);
