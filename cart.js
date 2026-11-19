@@ -52,18 +52,18 @@ export function getCartTotal() {
 // Inject Floating Cart Button & Side Drawer UI
 const drawerHTML = `
 <!-- Floating Cart Trigger Button -->
-<button id="cart-floating-btn" title="View Cart" style="position:fixed; bottom:24px; right:24px; width:56px; height:56px; border-radius:50%; background:linear-gradient(135deg, #2563eb, #0284c7); border:none; color:#fff; font-size:1.35rem; cursor:pointer; box-shadow:0 12px 28px rgba(0,0,0,0.32), 0 4px 14px rgba(37,99,235,0.4); z-index:9990; display:flex; align-items:center; justify-content:center; transition:transform 0.2s;">
+<button id="cart-floating-btn" title="View Cart" style="position:fixed; bottom:24px; right:24px; width:56px; height:56px; border-radius:50%; background:linear-gradient(135deg, #38bdf8, #2563eb); border:none; color:#fff; font-size:1.35rem; cursor:pointer; box-shadow:0 6px 24px rgba(56,189,248,0.4); z-index:9990; display:flex; align-items:center; justify-content:center; transition:transform 0.2s;">
   🛒
-  <span id="cart-badge" style="position:absolute; top:-3px; right:-3px; background:#ef4444; color:#fff; font-size:0.72rem; font-weight:700; width:20px; height:20px; border-radius:50%; display:none; align-items:center; justify-content:center; border:2px solid #ffffff;">0</span>
+  <span id="cart-badge" style="position:absolute; top:-3px; right:-3px; background:#ef4444; color:#fff; font-size:0.72rem; font-weight:700; width:20px; height:20px; border-radius:50%; display:none; align-items:center; justify-content:center; border:2px solid #07080c;">0</span>
 </button>
 
 <!-- Cart Side Drawer Overlay -->
-<div id="cart-drawer-overlay" style="display:none; position:fixed; inset:0; background:rgba(9,13,22,0.55); backdrop-filter:blur(6px); z-index:9998;"></div>
+<div id="cart-drawer-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); backdrop-filter:blur(6px); z-index:9998;"></div>
 
 <!-- Cart Side Drawer -->
-<div id="cart-drawer" style="position:fixed; top:0; right:-420px; width:100%; max-width:400px; height:100vh; background:#ffffff; border-left:1px solid rgba(15,23,42,0.1); z-index:9999; display:flex; flex-direction:column; transition:right 0.3s cubic-bezier(0.16, 1, 0.3, 1); box-shadow:-16px 0 45px rgba(0,0,0,0.28);">
-  <div style="padding:1.4rem; border-bottom:1px solid rgba(15,23,42,0.08); display:flex; justify-content:space-between; align-items:center;">
-    <h3 style="font-size:1.2rem; font-weight:800; color:#090d16; display:flex; align-items:center; gap:8px;">
+<div id="cart-drawer" style="position:fixed; top:0; right:-420px; width:100%; max-width:400px; height:100vh; background:#0e1017; border-left:1px solid rgba(255,255,255,0.1); z-index:9999; display:flex; flex-direction:column; transition:right 0.3s cubic-bezier(0.16, 1, 0.3, 1); box-shadow:-10px 0 30px rgba(0,0,0,0.5);">
+  <div style="padding:1.4rem; border-bottom:1px solid rgba(255,255,255,0.08); display:flex; justify-content:space-between; align-items:center;">
+    <h3 style="font-size:1.2rem; font-weight:700; color:#fff; display:flex; align-items:center; gap:8px;">
       <span>🛒</span> Your Cart
     </h3>
     <button id="cart-close-btn" style="background:none; border:none; color:var(--text-muted); font-size:1.5rem; cursor:pointer;">&times;</button>
@@ -73,10 +73,10 @@ const drawerHTML = `
     <!-- Items rendered dynamically -->
   </div>
 
-  <div style="padding:1.4rem; border-top:1px solid rgba(15,23,42,0.08); background:#f8fafc;">
-    <div style="display:flex; justify-content:space-between; font-size:1.1rem; font-weight:800; color:#090d16; margin-bottom:1.2rem;">
+  <div style="padding:1.4rem; border-top:1px solid rgba(255,255,255,0.08); background:rgba(15,17,26,0.6);">
+    <div style="display:flex; justify-content:space-between; font-size:1.1rem; font-weight:700; color:#fff; margin-bottom:1.2rem;">
       <span>Total:</span>
-      <span id="cart-drawer-total" style="color:#2563eb;">৳0 BDT</span>
+      <span id="cart-drawer-total" style="color:var(--accent-cyan);">৳0 BDT</span>
     </div>
     <a href="/payment" id="cart-checkout-btn" class="btn btn-primary" style="width:100%; text-align:center;">Proceed to Checkout</a>
   </div>
@@ -122,7 +122,7 @@ export function updateCartUI() {
   if (cart.length === 0) {
     itemsList.innerHTML = `
       <div style="text-align:center; padding:3rem 1rem; color:var(--text-muted); font-size:0.9rem;">
-        Your cart is empty.<br>Browse our services to add items.
+        Your cart is empty.<br>Browse our web and bot services to add items.
       </div>
     `;
     totalEl.innerText = "৳0 BDT";
@@ -130,14 +130,14 @@ export function updateCartUI() {
   }
 
   itemsList.innerHTML = cart.map(item => `
-    <div style="display:flex; justify-content:space-between; align-items:center; background:#f8fafc; border:1px solid rgba(15,23,42,0.1); padding:0.85rem 1rem; border-radius:12px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); padding:0.85rem 1rem; border-radius:10px;">
       <div>
-        <div style="font-weight:700; font-size:0.9rem; color:#090d16;">${item.name}</div>
-        <div style="font-size:0.8rem; color:#2563eb; font-weight:600; margin-top:2px;">
+        <div style="font-weight:600; font-size:0.9rem; color:#fff;">${item.name}</div>
+        <div style="font-size:0.8rem; color:var(--accent-cyan); margin-top:2px;">
           ৳${item.price.toLocaleString()} BDT ${item.quantity > 1 ? `&times; ${item.quantity}` : ""}
         </div>
       </div>
-      <button data-remove="${item.id}" style="background:none; border:none; color:#ef4444; cursor:pointer; font-size:1.1rem; padding:4px 8px;">🗑️</button>
+      <button data-remove="${item.id}" style="background:none; border:none; color:#f87171; cursor:pointer; font-size:1.1rem; padding:4px 8px;">🗑️</button>
     </div>
   `).join("");
 
