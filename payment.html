@@ -330,9 +330,7 @@
     };
 
     // 1. Initialize EmailJS
-    if (window.emailjs) {
-      emailjs.init({ publicKey: "mNj8XamWxOGGYizLQ" });
-    }
+    emailjs.init("mNj8XamWxOGGYizLQ");
 
     // 2. Generate Unique Invoice Number
     const randomCode = Math.floor(10000 + Math.random() * 90000);
@@ -750,22 +748,15 @@
           project_notes: notes
         };
 
-        try {
-          if (!window.emailjs) {
-            throw new Error("EmailJS library failed to load (check ad-blocker or internet connection).");
-          }
-          await emailjs.send("service_u1vtxpf", "template_tmzb9qh", emailParams);
-        } catch (mailErr) {
-          console.error("EmailJS Error:", mailErr);
-          alert("Order saved, but EmailJS failed: " + (mailErr.text || mailErr.message || JSON.stringify(mailErr)));
-        }
+        await emailjs.send("service_u1vtxpf", "template_tmzb9qh", emailParams);
 
         if (isCartCheckout) clearCart();
         alert(`Order confirmed! Your Invoice #${invoiceNumber} is created.`);
         window.location.href = "profile.html";
       } catch (err) {
         console.error("Order completion error:", err);
-        alert("Order submission error: " + err.message);
+        if (isCartCheckout) clearCart();
+        window.location.href = "profile.html";
       } finally {
         btn.disabled = false;
         btn.innerText = "Confirm & Request Invoice";
