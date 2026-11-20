@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Innovexa Studio | Customer Care & Live Support</title>
+  <title>Innovexa Studio | Support &amp; FAQ</title>
   <link rel="stylesheet" href="style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -142,6 +142,81 @@
       transform: translateY(-2px);
     }
 
+    /* Interactive FAQ Accordion */
+    .faq-list {
+      max-width: 860px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+    }
+
+    .faq-item {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      overflow: hidden;
+      transition: border-color 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .faq-item:hover,
+    .faq-item.open {
+      border-color: rgba(56, 189, 248, 0.45);
+    }
+
+    .faq-question {
+      width: 100%;
+      background: none;
+      border: none;
+      padding: 1.2rem 1.4rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      text-align: left;
+      font-family: inherit;
+      font-size: 0.98rem;
+      font-weight: 700;
+      color: #ffffff;
+      cursor: pointer;
+    }
+
+    .faq-toggle-icon {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      color: var(--accent-cyan);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.05rem;
+      font-weight: 700;
+      flex-shrink: 0;
+      transition: transform 0.25s ease, background 0.25s ease;
+    }
+
+    .faq-item.open .faq-toggle-icon {
+      transform: rotate(45deg);
+      background: rgba(56, 189, 248, 0.24);
+    }
+
+    .faq-answer {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .faq-answer-inner {
+      padding: 0 1.4rem 1.25rem;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      line-height: 1.65;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      padding-top: 0.9rem;
+    }
+
     @media (max-width: 860px) {
       .support-layout {
         grid-template-columns: 1fr;
@@ -170,9 +245,9 @@
 
   <main>
     <section class="hero reveal" style="min-height: 22vh; padding-top: 1.5rem; padding-bottom: 0.5rem;">
-      <div class="badge">Live Customer Care</div>
-      <h1>Direct <span class="gradient-text">Support & Consultation</span></h1>
-      <p>Select a product category or service below to open a direct live chat with our engineering team.</p>
+      <div class="badge">Live Customer Care &amp; Help Center</div>
+      <h1><span class="gradient-text">Support &amp; FAQ</span></h1>
+      <p>Browse quick answers below or select a service category to open a direct live chat with our engineering team.</p>
     </section>
 
     <section class="container reveal">
@@ -239,16 +314,118 @@
         </div>
       </div>
     </section>
+
+    <!-- FAQ Section -->
+    <section id="faq" class="container reveal">
+      <div class="section-title">
+        <h2>Frequently Asked <span class="gradient-text">Questions</span></h2>
+        <p>Quick answers about ordering, payments, delivery timelines, and custom development.</p>
+      </div>
+
+      <div class="faq-list">
+        <div class="faq-item open">
+          <button type="button" class="faq-question">
+            <span>1. What services does Innovexa Studio offer?</span>
+            <span class="faq-toggle-icon">+</span>
+          </button>
+          <div class="faq-answer" style="max-height: 220px;">
+            <div class="faq-answer-inner">
+              We offer six core services: <strong>Web Development</strong> (custom sites, landing pages, full-stack apps &amp; revamps), <strong>Discord Bots</strong> (moderation, economy, tickets, API &amp; game server integrations), <strong>App Making</strong> (Android &amp; iOS apps), <strong>Paid Promotion</strong>, <strong>Digital Marketing</strong> (SEO, Meta &amp; Google Ads), and <strong>Video Making &amp; Editing</strong>.
+            </div>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button type="button" class="faq-question">
+            <span>2. How do I place an order and pay?</span>
+            <span class="faq-toggle-icon">+</span>
+          </button>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              Select any package from our service pages and click <strong>Order Direct</strong> (or add multiple services to your <strong>Cart</strong>). On the checkout page, complete your transfer via <strong>bKash</strong> (bKash-to-bKash or Card/Bank-to-bKash) or <strong>UCB Bank Account</strong>, enter your Transaction ID (TrxID), and submit. Your invoice is generated immediately and emailed to you.
+            </div>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button type="button" class="faq-question">
+            <span>3. How long does delivery take?</span>
+            <span class="faq-toggle-icon">+</span>
+          </button>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              Delivery depends on project complexity: video edits, promotions, and standard Discord bots typically take <strong>1–3 days</strong>, while custom websites, dashboards, and mobile apps take <strong>3–10 days</strong>. You can track real-time progress (<em>Pending</em>, <em>In Progress</em>, <em>Completed</em>) directly from your <a href="/profile" style="color: var(--accent-cyan); text-decoration: underline;">Profile</a>.
+            </div>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button type="button" class="faq-question">
+            <span>4. Will I receive the full source code and setup help?</span>
+            <span class="faq-toggle-icon">+</span>
+          </button>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              Yes. For all custom websites, Discord bots, and applications, you receive clean, documented source code along with complimentary deployment assistance (Vercel, Render, GitHub, Cloudflare, or VPS setup) so your project runs smoothly from day one.
+            </div>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button type="button" class="faq-question">
+            <span>5. Can I request custom features not listed in the packages?</span>
+            <span class="faq-toggle-icon">+</span>
+          </button>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              Absolutely. You can include your custom specifications in the <strong>Project Requirements</strong> box at checkout or select <strong>Custom Project Inquiry</strong> in the live chat above to discuss a tailored build with our team before ordering.
+            </div>
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <button type="button" class="faq-question">
+            <span>6. What if I need revisions or post-delivery support?</span>
+            <span class="faq-toggle-icon">+</span>
+          </button>
+          <div class="faq-answer">
+            <div class="faq-answer-inner">
+              Every project includes revision rounds during development to ensure the final output matches your vision, plus free bug-fix support after delivery. Need ongoing updates later? Open a conversation anytime right here in <strong>Support &amp; FAQ</strong>.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
 
   <footer>
-    <p>&copy; 2026 Innovexa Studio. All rights reserved. • <a href="terms.html" style="color:var(--text-muted);">Terms &amp; Conditions</a> • <a href="privacy.html" style="color:var(--text-muted);">Privacy Policy</a></p>
+    <p>&copy; 2026 Innovexa Studio. All rights reserved. • <a href="/terms" style="color:var(--text-muted);">Terms &amp; Conditions</a> • <a href="/privacy" style="color:var(--text-muted);">Privacy Policy</a></p>
   </footer>
 
   <script src="app.js"></script>
   <script src="navbar.js"></script>
   <script type="module" src="cart.js"></script>
   <script type="module" src="auth-modal.js"></script>
+  <script>
+    // Interactive FAQ Accordion Toggle
+    document.querySelectorAll(".faq-question").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const item = btn.closest(".faq-item");
+        const answer = item.querySelector(".faq-answer");
+        const isOpen = item.classList.contains("open");
+
+        document.querySelectorAll(".faq-item.open").forEach((openItem) => {
+          openItem.classList.remove("open");
+          openItem.querySelector(".faq-answer").style.maxHeight = null;
+        });
+
+        if (!isOpen) {
+          item.classList.add("open");
+          answer.style.maxHeight = answer.scrollHeight + "px";
+        }
+      });
+    });
+  </script>
   <script type="module">
     import { auth, db } from "./firebase-config.js";
     import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
@@ -500,7 +677,7 @@
 
     function escapeHtml(str) {
       const div = document.createElement("div");
-      div.innerText = str;
+      div.innerText = str || "";
       return div.innerHTML;
     }
   </script>
