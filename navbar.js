@@ -79,7 +79,7 @@ const navbarHTML = `
 
       <li><a href="/gallery" class="${rawPath === 'gallery' ? 'active' : ''}">Gallery</a></li>
       <li><a href="/reviews" class="${rawPath === 'reviews' ? 'active' : ''}">Reviews</a></li>
-      <li><a href="/support" class="${rawPath === 'support' ? 'active' : ''}">Support</a></li>
+      <li><a href="/support" class="${rawPath === 'support' ? 'active' : ''}">Support &amp; FAQ</a></li>
       <li><a href="/about" class="${rawPath === 'about' ? 'active' : ''}">About</a></li>
       <li class="auth-nav-slot"><button class="btn-nav">Sign In</button></li>
     </ul>
