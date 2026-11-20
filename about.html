@@ -3,20 +3,70 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Innovexa Studio | About Us &amp; FAQ</title>
+  <title>Innovexa Studio | About Us & Leadership</title>
   <link rel="stylesheet" href="style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    .about-grid {
+    .about-split {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 1.5rem;
-      margin-top: 1.5rem;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 2rem;
+      align-items: stretch;
     }
 
-    .stat-strip {
+    .leader-card {
+      background: linear-gradient(145deg, rgba(56, 189, 248, 0.08), rgba(22, 24, 38, 0.8));
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      border-radius: 20px;
+      padding: 2.2rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .leader-avatar {
+      width: 72px;
+      height: 72px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: #fff;
+      box-shadow: 0 8px 24px rgba(56, 189, 248, 0.3);
+      margin-bottom: 1.25rem;
+    }
+
+    .contact-pill-box {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-top: 1.25rem;
+    }
+
+    .contact-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 1rem 1.25rem;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--card-border);
+      text-decoration: none;
+      transition: all 0.2s ease;
+    }
+
+    .contact-item:hover {
+      border-color: var(--accent-cyan);
+      background: rgba(56, 189, 248, 0.08);
+      transform: translateY(-2px);
+    }
+
+    .stats-strip {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
       gap: 1.25rem;
@@ -27,97 +77,21 @@
       background: var(--card-bg);
       border: 1px solid var(--card-border);
       border-radius: 16px;
-      padding: 1.5rem 1.25rem;
+      padding: 1.5rem;
       text-align: center;
-      backdrop-filter: blur(12px);
     }
 
     .stat-num {
-      font-size: 1.85rem;
+      font-size: 1.8rem;
       font-weight: 800;
       color: var(--accent-cyan);
-      line-height: 1.15;
+      margin-bottom: 0.2rem;
     }
 
-    .stat-label {
-      font-size: 0.82rem;
-      color: var(--text-muted);
-      margin-top: 0.35rem;
-    }
-
-    /* Interactive FAQ Accordion */
-    .faq-list {
-      max-width: 820px;
-      margin: 0 auto;
-      display: flex;
-      flex-direction: column;
-      gap: 0.9rem;
-    }
-
-    .faq-item {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 14px;
-      overflow: hidden;
-      transition: border-color 0.25s ease, box-shadow 0.25s ease;
-    }
-
-    .faq-item:hover,
-    .faq-item.open {
-      border-color: rgba(56, 189, 248, 0.45);
-    }
-
-    .faq-question {
-      width: 100%;
-      background: none;
-      border: none;
-      padding: 1.2rem 1.4rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 1rem;
-      text-align: left;
-      font-family: inherit;
-      font-size: 0.98rem;
-      font-weight: 700;
-      color: #ffffff;
-      cursor: pointer;
-    }
-
-    .faq-toggle-icon {
-      width: 26px;
-      height: 26px;
-      border-radius: 50%;
-      background: rgba(56, 189, 248, 0.12);
-      border: 1px solid rgba(56, 189, 248, 0.3);
-      color: var(--accent-cyan);
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.05rem;
-      font-weight: 700;
-      flex-shrink: 0;
-      transition: transform 0.25s ease, background 0.25s ease;
-    }
-
-    .faq-item.open .faq-toggle-icon {
-      transform: rotate(45deg);
-      background: rgba(56, 189, 248, 0.24);
-    }
-
-    .faq-answer {
-      max-height: 0;
-      overflow: hidden;
-      transition: max-height 0.32s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-
-    .faq-answer-inner {
-      padding: 0 1.4rem 1.25rem;
-      font-size: 0.9rem;
-      color: var(--text-muted);
-      line-height: 1.65;
-      border-top: 1px solid rgba(255, 255, 255, 0.06);
-      padding-top: 0.9rem;
+    @media (max-width: 820px) {
+      .about-split {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
@@ -131,172 +105,101 @@
     </div>
   </div>
 
-  <!-- Cursor Glow -->
   <div id="cursor-glow"></div>
-
   <canvas id="bg-canvas"></canvas>
   <div class="ambient-glow"></div>
 
-  <!-- Centralized Dynamic Navigation -->
   <div id="navbar-placeholder"></div>
 
   <main>
-    <!-- Hero Section -->
-    <section class="hero reveal" style="min-height: 34vh; padding-top: 2rem; padding-bottom: 1rem;">
-      <div class="badge">Who We Are</div>
-      <h1>About <span class="gradient-text">Innovexa Studio</span></h1>
-      <p>
-        We are a Bangladesh-based digital engineering and creative studio building high-speed websites, custom Discord bots, mobile apps, and growth campaigns for creators, communities, and businesses.
-      </p>
+    <!-- Hero -->
+    <section class="hero reveal" style="min-height: 28vh; padding-top: 2rem; padding-bottom: 1rem;">
+      <div class="badge">Our Story & Mission</div>
+      <h1>Engineering Digital <span class="gradient-text">Precision & Reliability</span></h1>
+      <p>Innovexa Studio builds high-performance web platforms, custom Discord automation, and scalable community infrastructure.</p>
     </section>
 
-    <!-- Studio Highlights & Core Pillars -->
-    <section class="container reveal" style="padding-top: 1rem;">
-      <div class="stat-strip">
+    <section class="container reveal">
+      <!-- Brand Story + Owner Spotlight -->
+      <div class="about-split">
+        <!-- Brand Overview & Contact -->
+        <div class="card" style="padding: 2.2rem;">
+          <h2 style="font-size: 1.45rem; margin-bottom: 0.75rem;">Who We Are</h2>
+          <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.65; margin-bottom: 1.25rem;">
+            Founded with a focus on zero-bloat engineering and modern UI design, <strong>Innovexa Studio</strong> helps creators, gaming communities, and businesses launch reliable web applications and custom Discord bots without technical debt.
+          </p>
+          <p style="color: var(--text-muted); font-size: 0.95rem; line-height: 1.65; margin-bottom: 1.5rem;">
+            Every project is built with security-first architecture, clean modular code, and direct post-launch support.
+          </p>
+
+          <h3 style="font-size: 1.1rem; color: #fff; margin-top: auto;">Direct Contact Channels</h3>
+          <div id="contact-channels-list" class="contact-pill-box"></div>
+        </div>
+
+        <!-- Founder / Owner Card -->
+        <div class="leader-card">
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div class="leader-avatar">MT</div>
+              <span class="badge" style="margin: 0; font-size: 0.72rem;">Founder & Owner</span>
+            </div>
+            <h2 style="font-size: 1.5rem; color: #fff; margin-bottom: 0.25rem;">Muntasir Tonmoy</h2>
+            <div style="color: var(--accent-cyan); font-size: 0.88rem; font-weight: 600; margin-bottom: 1rem;">
+              Lead Full-Stack & Bot Architect
+            </div>
+            <p style="color: var(--text-muted); font-size: 0.9rem; line-height: 1.6; margin-bottom: 1.5rem;">
+              Overseeing system architecture, client project delivery, and custom engineering across all Innovexa Studio web and Discord solutions.
+            </p>
+          </div>
+
+          <a href="https://muntasir-tonmoy.vercel.app" target="_blank" rel="noopener noreferrer" class="btn btn-primary" style="width: 100%;">
+            🌐 Visit Owner Portfolio &rarr;
+          </a>
+        </div>
+      </div>
+
+      <!-- Studio Highlights / Stats -->
+      <div class="stats-strip">
         <div class="stat-box">
-          <div class="stat-num">6+</div>
-          <div class="stat-label">Specialized Digital Services</div>
+          <div class="stat-num">99.9%</div>
+          <div style="font-size: 0.85rem; color: var(--text-muted);">Bot & App Uptime Standard</div>
         </div>
         <div class="stat-box">
-          <div class="stat-num">24/7</div>
-          <div class="stat-label">Bot &amp; Cloud Uptime Architecture</div>
+          <div class="stat-num">1–4 Days</div>
+          <div style="font-size: 0.85rem; color: var(--text-muted);">Average Project Turnaround</div>
         </div>
         <div class="stat-box">
           <div class="stat-num">100%</div>
-          <div class="stat-label">Custom Code &amp; Tailored Builds</div>
+          <div style="font-size: 0.85rem; color: var(--text-muted);">Custom Source & Clean Code</div>
         </div>
         <div class="stat-box">
-          <div class="stat-num">Direct</div>
-          <div class="stat-label">Real-Time Support &amp; Tracking</div>
+          <div class="stat-num">24/7</div>
+          <div style="font-size: 0.85rem; color: var(--text-muted);">Dedicated Ticket Support</div>
         </div>
       </div>
 
-      <div class="about-grid">
-        <div class="card">
-          <div class="card-icon">🚀</div>
-          <h3>Our Mission</h3>
-          <p>
-            To bridge the gap between ambitious ideas and production-ready software—delivering clean, scalable websites, automation bots, and digital growth tools without agency bloat or hidden delays.
-          </p>
+      <!-- HIDDEN ADMIN TEAM SECTION (Automatically appears when you add people to `adminTeam` below) -->
+      <div id="admin-team-section" style="display: none; margin-top: 3.5rem;">
+        <div class="section-title" style="margin-bottom: 2rem;">
+          <h2>Studio Administrators</h2>
+          <p>Core management and operations team.</p>
         </div>
-
-        <div class="card">
-          <div class="card-icon">🛠️</div>
-          <h3>Full-Spectrum Execution</h3>
-          <p>
-            From full-stack web applications, Android/iOS app development, and Node.js Discord bots to high-retention video editing, paid promotions, and SEO/ad marketing—everything lives under one roof.
-          </p>
-        </div>
-
-        <div class="card">
-          <div class="card-icon">🔒</div>
-          <h3>Transparent Workflow</h3>
-          <p>
-            Every order generates an instant digital invoice, live order status tracking in your profile, verified bKash/UCB payment confirmation, and direct live chat support with our team.
-          </p>
-        </div>
-      </div>
-    </section>
-
-    <!-- FAQ Section -->
-    <section id="faq" class="container reveal">
-      <div class="section-title">
-        <h2>Frequently Asked <span class="gradient-text">Questions</span></h2>
-        <p>Everything you need to know about ordering, payments, delivery timelines, and support.</p>
+        <div class="grid" id="admin-team-grid"></div>
       </div>
 
-      <div class="faq-list">
-        <div class="faq-item open">
-          <button type="button" class="faq-question">
-            <span>1. What services does Innovexa Studio offer?</span>
-            <span class="faq-toggle-icon">+</span>
-          </button>
-          <div class="faq-answer" style="max-height: 220px;">
-            <div class="faq-answer-inner">
-              We offer six core services: <strong>Web Development</strong> (custom sites, landing pages, full-stack apps &amp; revamps), <strong>Discord Bots</strong> (moderation, economy, tickets, API &amp; game server integrations), <strong>App Making</strong> (Android &amp; iOS apps), <strong>Paid Promotion</strong>, <strong>Digital Marketing</strong> (SEO, Meta &amp; Google Ads), and <strong>Video Making &amp; Editing</strong>.
-            </div>
-          </div>
+      <!-- HIDDEN STAFF TEAM SECTION (Automatically appears when you add people to `staffTeam` below) -->
+      <div id="staff-team-section" style="display: none; margin-top: 3.5rem;">
+        <div class="section-title" style="margin-bottom: 2rem;">
+          <h2>Engineering & Support Staff</h2>
+          <p>Developers, moderators, and support specialists.</p>
         </div>
-
-        <div class="faq-item">
-          <button type="button" class="faq-question">
-            <span>2. How do I place an order and pay?</span>
-            <span class="faq-toggle-icon">+</span>
-          </button>
-          <div class="faq-answer">
-            <div class="faq-answer-inner">
-              Select any package from our service pages and click <strong>Order Direct</strong> (or add multiple services to your <strong>Cart</strong>). On the checkout page, complete your transfer via <strong>bKash</strong> (bKash-to-bKash or Card/Bank-to-bKash) or <strong>UCB Bank Account</strong>, enter your Transaction ID (TrxID), and submit. Your invoice is generated immediately and emailed to you.
-            </div>
-          </div>
-        </div>
-
-        <div class="faq-item">
-          <button type="button" class="faq-question">
-            <span>3. How long does delivery take?</span>
-            <span class="faq-toggle-icon">+</span>
-          </button>
-          <div class="faq-answer">
-            <div class="faq-answer-inner">
-              Delivery depends on project complexity: video edits, promotions, and standard Discord bots typically take <strong>1–3 days</strong>, while custom websites, dashboards, and mobile apps take <strong>3–10 days</strong>. You can track real-time progress (<em>Pending</em>, <em>In Progress</em>, <em>Completed</em>) directly from your <a href="/profile" style="color: var(--accent-cyan); text-decoration: underline;">Profile</a>.
-            </div>
-          </div>
-        </div>
-
-        <div class="faq-item">
-          <button type="button" class="faq-question">
-            <span>4. Will I receive the full source code and setup help?</span>
-            <span class="faq-toggle-icon">+</span>
-          </button>
-          <div class="faq-answer">
-            <div class="faq-answer-inner">
-              Yes. For all custom websites, Discord bots, and applications, you receive clean, documented source code along with complimentary deployment assistance (Vercel, Render, GitHub, Cloudflare, or VPS setup) so your project runs smoothly from day one.
-            </div>
-          </div>
-        </div>
-
-        <div class="faq-item">
-          <button type="button" class="faq-question">
-            <span>5. Can I request custom features not listed in the packages?</span>
-            <span class="faq-toggle-icon">+</span>
-          </button>
-          <div class="faq-answer">
-            <div class="faq-answer-inner">
-              Absolutely. You can include your custom specifications in the <strong>Project Requirements</strong> box at checkout or open a live ticket on our <a href="/support" style="color: var(--accent-cyan); text-decoration: underline;">Support</a> page to discuss a tailored build before ordering.
-            </div>
-          </div>
-        </div>
-
-        <div class="faq-item">
-          <button type="button" class="faq-question">
-            <span>6. What if I need revisions or post-delivery support?</span>
-            <span class="faq-toggle-icon">+</span>
-          </button>
-          <div class="faq-answer">
-            <div class="faq-answer-inner">
-              Every project includes revision rounds during development to ensure the final output matches your vision, plus free bug-fix support after delivery. Need ongoing updates later? Our team is always one message away in <a href="/support" style="color: var(--accent-cyan); text-decoration: underline;">Live Support</a>.
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Bottom CTA Card -->
-    <section class="container reveal">
-      <div class="card" style="text-align: center; padding: 3rem 2rem;">
-        <h2 style="font-size: 1.85rem; margin-bottom: 0.75rem;">Ready to Launch Your Next Project?</h2>
-        <p style="max-width: 560px; margin: 0 auto 1.75rem; color: var(--text-muted);">
-          Explore our service packages or start a live conversation with our team today.
-        </p>
-        <div class="hero-actions">
-          <a href="/web_service" class="btn btn-primary">Explore Services</a>
-          <a href="/support" class="btn btn-secondary">Contact Support</a>
-        </div>
+        <div class="grid" id="staff-team-grid"></div>
       </div>
     </section>
   </main>
 
   <footer>
-    <p>&copy; 2026 Innovexa Studio. All rights reserved. • <a href="/terms" style="color:var(--text-muted);">Terms &amp; Conditions</a> • <a href="/privacy" style="color:var(--text-muted);">Privacy Policy</a></p>
+    <p>&copy; 2026 Innovexa Studio. All rights reserved. • <a href="terms.html" style="color:var(--text-muted);">Terms &amp; Conditions</a> • <a href="privacy.html" style="color:var(--text-muted);">Privacy Policy</a></p>
   </footer>
 
   <script src="app.js"></script>
@@ -304,25 +207,73 @@
   <script type="module" src="cart.js"></script>
   <script type="module" src="auth-modal.js"></script>
   <script>
-    // Interactive FAQ Accordion Toggle
-    document.querySelectorAll(".faq-question").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const item = btn.closest(".faq-item");
-        const answer = item.querySelector(".faq-answer");
-        const isOpen = item.classList.contains("open");
+    /* =========================================================
+       EASY CONFIGURATION: EDIT CONTACT, ADMINS, & STAFF HERE
+       ========================================================= */
 
-        // Close other open items
-        document.querySelectorAll(".faq-item.open").forEach((openItem) => {
-          openItem.classList.remove("open");
-          openItem.querySelector(".faq-answer").style.maxHeight = null;
-        });
+    // 1. Contact Details (Update these anytime you switch to dedicated business accounts)
+    const studioContact = {
+      email: "muntasirtonmoy10@gmail.com",
+      phone: "+8801741644334"
+    };
 
-        if (!isOpen) {
-          item.classList.add("open");
-          answer.style.maxHeight = answer.scrollHeight + "px";
-        }
-      });
-    });
+    // 2. Admin Team (Stays completely hidden while empty [])
+    // Example when ready: { name: "Alex Hunter", role: "Operations Admin", bio: "Handles client onboarding." }
+    const adminTeam = [];
+
+    // 3. Staff Team (Stays completely hidden while empty [])
+    // Example when ready: { name: "Sarah Khan", role: "Frontend Developer", bio: "UI/UX & responsive web specialist." }
+    const staffTeam = [];
+
+    /* =========================================================
+       RENDER LOGIC (DO NOT NEED TO EDIT BELOW)
+       ========================================================= */
+
+    // Render Contact Pills
+    const contactContainer = document.getElementById("contact-channels-list");
+    const cleanPhone = studioContact.phone.replace(/[^0-9]/g, "");
+    contactContainer.innerHTML = `
+      <a href="mailto:${studioContact.email}" class="contact-item">
+        <span style="font-size: 1.4rem;">✉️</span>
+        <div>
+          <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Official Email</div>
+          <div style="color: #fff; font-weight: 600; font-size: 0.92rem;">${studioContact.email}</div>
+        </div>
+      </a>
+      <a href="https://wa.me/${cleanPhone}" target="_blank" rel="noopener noreferrer" class="contact-item">
+        <span style="font-size: 1.4rem;">📞</span>
+        <div>
+          <div style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Phone / WhatsApp</div>
+          <div style="color: var(--accent-cyan); font-weight: 600; font-size: 0.92rem;">${studioContact.phone}</div>
+        </div>
+      </a>
+    `;
+
+    // Render Admins ONLY if array has members
+    if (adminTeam.length > 0) {
+      document.getElementById("admin-team-section").style.display = "block";
+      document.getElementById("admin-team-grid").innerHTML = adminTeam.map(person => `
+        <div class="card">
+          <span class="badge" style="align-self: flex-start; margin-bottom: 0.75rem; font-size: 0.7rem;">Admin</span>
+          <h3 style="margin-bottom: 0.25rem;">${person.name}</h3>
+          <div style="color: var(--accent-cyan); font-size: 0.85rem; font-weight: 600; margin-bottom: 0.75rem;">${person.role}</div>
+          <p style="margin-bottom: 0;">${person.bio || ""}</p>
+        </div>
+      `).join("");
+    }
+
+    // Render Staff ONLY if array has members
+    if (staffTeam.length > 0) {
+      document.getElementById("staff-team-section").style.display = "block";
+      document.getElementById("staff-team-grid").innerHTML = staffTeam.map(person => `
+        <div class="card">
+          <span class="badge" style="align-self: flex-start; margin-bottom: 0.75rem; font-size: 0.7rem; border-color: rgba(52,211,153,0.35); color: #34d399;">Staff</span>
+          <h3 style="margin-bottom: 0.25rem;">${person.name}</h3>
+          <div style="color: var(--accent-cyan); font-size: 0.85rem; font-weight: 600; margin-bottom: 0.75rem;">${person.role}</div>
+          <p style="margin-bottom: 0;">${person.bio || ""}</p>
+        </div>
+      `).join("");
+    }
   </script>
 </body>
 </html>
