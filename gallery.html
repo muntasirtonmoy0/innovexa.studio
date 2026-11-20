@@ -9,11 +9,43 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
+    .gallery-filters {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 2rem;
+    }
+
+    .filter-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      padding: 0.48rem 1.05rem;
+      border-radius: 99px;
+      font-size: 0.84rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .filter-btn:hover {
+      border-color: rgba(255, 255, 255, 0.22);
+      color: #fff;
+    }
+
+    .filter-btn.active {
+      background: rgba(56, 189, 248, 0.15);
+      border-color: var(--accent-cyan);
+      color: #fff;
+      box-shadow: 0 0 15px rgba(56, 189, 248, 0.15);
+    }
+
     .gallery-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
       gap: 1.5rem;
-      margin-top: 2rem;
+      margin-top: 1.5rem;
     }
 
     .gallery-card {
@@ -45,6 +77,31 @@
       flex-direction: column;
       flex-grow: 1;
     }
+
+    /* Custom Centered Feedback Modal */
+    .gal-dialog-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 7, 12, 0.82);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      z-index: 99999;
+      align-items: center;
+      justify-content: center;
+      padding: 1.25rem;
+    }
+
+    .gal-dialog-card {
+      width: 100%;
+      max-width: 410px;
+      background: linear-gradient(165deg, rgba(22, 25, 40, 0.97), rgba(11, 13, 22, 0.99));
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      border-radius: 22px;
+      padding: 2.2rem 1.85rem;
+      text-align: center;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65);
+    }
   </style>
 </head>
 <body>
@@ -58,9 +115,9 @@
 
   <main>
     <section class="hero reveal" style="min-height: 26vh; padding-top: 2rem;">
-      <div class="badge">Showcase & Proofs</div>
-      <h1>Project <span class="gradient-text">Gallery & Builds</span></h1>
-      <p>Browse live implementations, Discord bot dashboards, and community creations.</p>
+      <div class="badge">Showcase &amp; Proofs</div>
+      <h1>Project <span class="gradient-text">Gallery &amp; Builds</span></h1>
+      <p>Browse live implementations, Discord bot dashboards, apps, marketing results, and community creations.</p>
       <div style="margin-top: 1rem;">
         <button id="toggle-upload-btn" class="btn btn-primary">➕ Upload Showcase Item</button>
       </div>
@@ -70,7 +127,7 @@
     <section id="upload-section" class="container reveal" style="display:none; padding-top:0;">
       <div class="form-box">
         <h3 style="font-size:1.25rem; margin-bottom:0.4rem;">Submit to Gallery</h3>
-        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1.25rem;">Share your bot in action or custom site screenshot.</p>
+        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1.25rem;">Share your project screenshot or campaign showcase.</p>
 
         <form id="gallery-form">
           <div class="form-group">
@@ -86,9 +143,12 @@
           <div class="form-group">
             <label for="item-category">Category</label>
             <select id="item-category" class="form-input">
-              <option value="Discord Bot">Discord Bot</option>
-              <option value="Website">Website</option>
-              <option value="Community Dashboard">Community Dashboard</option>
+              <option value="Web Development">🌐 Web Development</option>
+              <option value="Discord Bots">🤖 Discord Bots</option>
+              <option value="App Making">📱 App Making</option>
+              <option value="Paid Promotion">📣 Paid Promotion</option>
+              <option value="Digital Marketing">📈 Digital Marketing</option>
+              <option value="Video Making & Editing">🎬 Video Making &amp; Editing</option>
             </select>
           </div>
 
@@ -103,15 +163,35 @@
       </div>
     </section>
 
-    <!-- Gallery Grid -->
+    <!-- Gallery Filters & Live Grid -->
     <section class="container reveal">
+      <div class="gallery-filters">
+        <button class="filter-btn active" data-filter="all">All Projects</button>
+        <button class="filter-btn" data-filter="Web Development">🌐 Web Development</button>
+        <button class="filter-btn" data-filter="Discord Bots">🤖 Discord Bots</button>
+        <button class="filter-btn" data-filter="App Making">📱 App Making</button>
+        <button class="filter-btn" data-filter="Paid Promotion">📣 Paid Promotion</button>
+        <button class="filter-btn" data-filter="Digital Marketing">📈 Digital Marketing</button>
+        <button class="filter-btn" data-filter="Video Making & Editing">🎬 Video Making &amp; Editing</button>
+      </div>
+
       <div id="gallery-loading" style="text-align:center; color:var(--text-muted);">Loading gallery items...</div>
       <div class="gallery-grid" id="gallery-container"></div>
     </section>
   </main>
 
+  <!-- Custom Centered Notification Modal -->
+  <div id="gal-dialog-modal" class="gal-dialog-overlay">
+    <div class="gal-dialog-card">
+      <div id="gal-dialog-icon" style="width:60px; height:60px; margin:0 auto 1rem; border-radius:50%; background:rgba(52,211,153,0.14); border:2px solid rgba(52,211,153,0.5); display:flex; align-items:center; justify-content:center; font-size:1.75rem; color:#34d399;">✓</div>
+      <h3 id="gal-dialog-title" style="font-size:1.35rem; font-weight:800; color:#fff; margin-bottom:0.4rem;">Showcase Published!</h3>
+      <p id="gal-dialog-msg" style="font-size:0.88rem; color:var(--text-muted); line-height:1.5; margin-bottom:1.4rem;"></p>
+      <button type="button" id="gal-dialog-ok-btn" class="btn btn-primary" style="width:100%;">Done</button>
+    </div>
+  </div>
+
   <footer>
-    <p>&copy; 2026 Innovexa Studio. All rights reserved. • <a href="terms.html" style="color:var(--text-muted);">Terms &amp; Conditions</a> • <a href="privacy.html" style="color:var(--text-muted);">Privacy Policy</a></p>
+    <p>&copy; 2026 Innovexa Studio. All rights reserved. • <a href="/terms" style="color:var(--text-muted);">Terms &amp; Conditions</a> • <a href="/privacy" style="color:var(--text-muted);">Privacy Policy</a></p>
   </footer>
 
   <script src="app.js"></script>
@@ -130,6 +210,32 @@
     const galleryContainer = document.getElementById("gallery-container");
     const galleryLoading = document.getElementById("gallery-loading");
     const uploadStatus = document.getElementById("upload-status");
+
+    const galDialog = document.getElementById("gal-dialog-modal");
+    const galDialogIcon = document.getElementById("gal-dialog-icon");
+    const galDialogTitle = document.getElementById("gal-dialog-title");
+    const galDialogMsg = document.getElementById("gal-dialog-msg");
+    document.getElementById("gal-dialog-ok-btn").onclick = () => { galDialog.style.display = "none"; };
+
+    function showGalleryDialog(title, msg, isError = false) {
+      galDialogTitle.innerText = title;
+      galDialogMsg.innerText = msg;
+      if (isError) {
+        galDialogIcon.innerText = "!";
+        galDialogIcon.style.background = "rgba(239,68,68,0.14)";
+        galDialogIcon.style.borderColor = "rgba(239,68,68,0.5)";
+        galDialogIcon.style.color = "#f87171";
+      } else {
+        galDialogIcon.innerText = "✓";
+        galDialogIcon.style.background = "rgba(52,211,153,0.14)";
+        galDialogIcon.style.borderColor = "rgba(52,211,153,0.5)";
+        galDialogIcon.style.color = "#34d399";
+      }
+      galDialog.style.display = "flex";
+    }
+
+    let allGalleryItems = [];
+    let currentFilter = "all";
 
     uploadBtn.onclick = () => {
       if (!auth.currentUser) {
@@ -177,9 +283,9 @@
         galleryForm.reset();
         uploadSection.style.display = "none";
         uploadStatus.style.display = "none";
-        alert("Showcase uploaded successfully!");
+        showGalleryDialog("Showcase Published!", "Your project has been uploaded and is now live in the gallery.");
       } catch (err) {
-        alert("Error publishing item: " + err.message);
+        showGalleryDialog("Upload Error", err.message, true);
       } finally {
         submitBtn.disabled = false;
         submitBtn.innerText = "Publish to Gallery";
@@ -187,31 +293,62 @@
       }
     };
 
-    const q = query(collection(db, "gallery"), orderBy("createdAt", "desc"));
-    onSnapshot(q, (snap) => {
-      galleryLoading.style.display = "none";
-      galleryContainer.innerHTML = snap.empty ? `<p style="grid-column:1/-1; text-align:center; color:var(--text-muted);">No items in the gallery yet.</p>` : "";
+    function matchesCategory(itemCategory, filter) {
+      if (filter === "all") return true;
+      if (itemCategory === filter) return true;
+      if (filter === "Web Development" && (itemCategory === "Website" || itemCategory === "Community Dashboard")) return true;
+      if (filter === "Discord Bots" && itemCategory === "Discord Bot") return true;
+      return false;
+    }
 
-      snap.forEach(doc => {
-        const d = doc.data();
-        const date = d.createdAt ? new Date(d.createdAt.toDate()).toLocaleDateString() : "Recent";
-        galleryContainer.insertAdjacentHTML("beforeend", `
+    function renderGallery() {
+      const filtered = allGalleryItems.filter(item => matchesCategory(item.category, currentFilter));
+
+      if (filtered.length === 0) {
+        galleryContainer.innerHTML = `<p style="grid-column:1/-1; text-align:center; color:var(--text-muted); padding:2rem;">No showcase items found in this category yet.</p>`;
+        return;
+      }
+
+      galleryContainer.innerHTML = filtered.map(d => {
+        const date = d.createdAt?.toDate ? new Date(d.createdAt.toDate()).toLocaleDateString() : "Recent";
+        return `
           <div class="gallery-card">
-            <a href="${d.imageUrl}" target="_blank">
+            <a href="${d.imageUrl}" target="_blank" rel="noopener noreferrer">
               <img src="${d.imageUrl}" alt="${d.title}" class="gallery-image" loading="lazy" />
             </a>
             <div class="gallery-info">
-              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:6px;">
                 <span class="badge" style="margin:0; font-size:0.68rem; padding:0.18rem 0.55rem;">${d.category || "Showcase"}</span>
                 <span style="font-size:0.75rem; color:var(--text-muted);">${date}</span>
               </div>
               <h3 style="font-size:1.1rem; color:#fff; margin-bottom:0.4rem;">${d.title}</h3>
               <p style="font-size:0.86rem; color:var(--text-muted); line-height:1.45; margin-bottom:0.75rem;">${d.desc}</p>
-              <div style="margin-top:auto; font-size:0.75rem; color:var(--text-muted);">Uploaded by <strong style="color:#fff;">${d.authorName}</strong></div>
+              <div style="margin-top:auto; font-size:0.75rem; color:var(--text-muted);">Uploaded by <strong style="color:#fff;">${d.authorName || "Innovexa Official"}</strong></div>
             </div>
           </div>
-        `);
+        `;
+      }).join("");
+    }
+
+    // Filter button handlers
+    document.querySelectorAll(".filter-btn").forEach(btn => {
+      btn.onclick = () => {
+        document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        currentFilter = btn.getAttribute("data-filter");
+        renderGallery();
+      };
+    });
+
+    // Real-time Firestore listener (auto-updates immediately on add or delete)
+    const q = query(collection(db, "gallery"), orderBy("createdAt", "desc"));
+    onSnapshot(q, (snap) => {
+      galleryLoading.style.display = "none";
+      allGalleryItems = [];
+      snap.forEach(docSnap => {
+        allGalleryItems.push({ id: docSnap.id, ...docSnap.data() });
       });
+      renderGallery();
     });
   </script>
 </body>
