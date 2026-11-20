@@ -1,121 +1,76 @@
 /* =========================================================
-   INNOVEXA STUDIO — HOMEPAGE SIDE-ENTRY PERSPECTIVE ANIMATION
+   INNOVEXA STUDIO — HOMEPAGE SCROLL-SCRUBBED SIDE PERSPECTIVE
    Applies exclusively to index.html
    ========================================================= */
 
 document.addEventListener("DOMContentLoaded", () => {
-  // 1. Top Glowing Scroll Progress Bar
-  const progressBar = document.createElement("div");
-  progressBar.id = "home-scroll-progress";
-  Object.assign(progressBar.style, {
-    position: "fixed",
-    top: "0",
-    left: "0",
-    height: "3px",
-    width: "0%",
-    background: "linear-gradient(90deg, #38bdf8, #818cf8, #34d399)",
-    boxShadow: "0 0 12px rgba(56, 189, 248, 0.85)",
-    zIndex: "99998",
-    pointerEvents: "none",
-    transition: "width 0.1s ease-out"
-  });
-  document.body.appendChild(progressBar);
+  const trackedItems = [];
 
-  // 2. Side-Entry Perspective Observer for Cards & Section Titles
-  const sideObserver = new IntersectionObserver(
-    (entries, observer) => {
-      let batchIndex = 0;
-      entries.forEach((entry) => {
-        if (!entry.isIntersecting) return;
-
-        const target = entry.target;
-        const delay = batchIndex * 110;
-        batchIndex++;
-
-        setTimeout(() => {
-          target.style.opacity = "1";
-          target.style.transform =
-            "perspective(1100px) translate3d(0, 0, 0) rotateY(0deg) scale(1)";
-
-          // Clear inline transition once settled so 3D hover tilt stays instant
-          setTimeout(() => {
-            target.style.transition = "";
-          }, 850);
-        }, delay);
-
-        observer.unobserve(target);
-      });
-    },
-    {
-      threshold: 0.12,
-      rootMargin: "0px 0px -30px 0px"
-    }
-  );
-
-  function bindSideEntryAnimations() {
-    // Animate grid cards alternating from left and right sides with 3D perspective
+  // Register cards and section headings with alternating left/right start offsets
+  function registerScrollItems() {
     document.querySelectorAll(".grid").forEach((grid) => {
       const cards = grid.querySelectorAll(".card");
       cards.forEach((card, index) => {
-        if (card.dataset.sideBound) return;
-        card.dataset.sideBound = "true";
+        if (card.dataset.scrubBound) return;
+        card.dataset.scrubBound = "true";
 
-        // Left cards enter from left (-85px), right cards from right (+85px), middle card subtle right/left sweep
         const fromLeft = index % 2 === 0;
-        const startX = fromLeft ? -85 : 85;
-        const startRotateY = fromLeft ? 14 : -14;
-
-        card.style.opacity = "0";
-        card.style.transform = `perspective(1100px) translate3d(${startX}px, 18px, -40px) rotateY(${startRotateY}deg) scale(0.95)`;
-        card.style.transition =
-          "opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.85s cubic-bezier(0.16, 1, 0.3, 1)";
-        sideObserver.observe(card);
+        trackedItems.push({
+          el: card,
+          startX: fromLeft ? -160 : 160,
+          startY: 45,
+          startRotateY: fromLeft ? 22 : -22,
+          settled: false
+        });
       });
     });
 
-    // Animate standalone section titles & bottom assurance card
     document
       .querySelectorAll(".section-title, .container > .card")
       .forEach((el, idx) => {
-        if (el.dataset.sideBound) return;
-        el.dataset.sideBound = "true";
+        if (el.dataset.scrubBound) return;
+        el.dataset.scrubBound = "true";
 
-        const startX = idx % 2 === 0 ? -55 : 55;
-        el.style.opacity = "0";
-        el.style.transform = `perspective(1100px) translate3d(${startX}px, 14px, 0) scale(0.97)`;
-        el.style.transition =
-          "opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1)";
-        sideObserver.observe(el);
+        const fromLeft = idx % 2 === 0;
+        trackedItems.push({
+          el,
+          startX: fromLeft ? -110 : 110,
+          startY: 30,
+          startRotateY: fromLeft ? 10 : -10,
+          settled: false
+        });
       });
   }
 
-  bindSideEntryAnimations();
+  registerScrollItems();
 
-  // Re-bind automatically when Firestore loads live gallery cards into #home-gallery-preview
+  // Watch for live Firestore gallery cards on homepage
   const homeGallery = document.getElementById("home-gallery-preview");
   if (homeGallery) {
-    const mutObs = new MutationObserver(() => bindSideEntryAnimations());
+    const mutObs = new MutationObserver(() => {
+      registerScrollItems();
+      updateScrollScrub();
+    });
     mutObs.observe(homeGallery, { childList: true });
   }
 
-  // 3. Smooth Hero Parallax & Scroll Progress Loop (60fps)
   const heroSection = document.querySelector(".hero");
   const ambientGlow = document.querySelector(".ambient-glow");
   let ticking = false;
 
-  function updateScrollEffects() {
+  // Smooth ease-out curve for natural deceleration as boxes lock in
+  function easeOutCubic(t) {
+    return 1 - Math.pow(1 - t, 3);
+  }
+
+  function updateScrollScrub() {
     const scrollTop = window.scrollY || document.documentElement.scrollTop;
-    const docHeight =
-      document.documentElement.scrollHeight - document.documentElement.clientHeight;
+    const vh = window.innerHeight;
 
-    if (docHeight > 0) {
-      const percent = Math.min(100, (scrollTop / docHeight) * 100);
-      progressBar.style.width = `${percent}%`;
-    }
-
-    if (heroSection && scrollTop < 780) {
-      const translateY = scrollTop * 0.22;
-      const opacity = Math.max(0.18, 1 - scrollTop / 640);
+    // 1. Hero subtle downward parallax & fade
+    if (heroSection && scrollTop < 850) {
+      const translateY = scrollTop * 0.24;
+      const opacity = Math.max(0.15, 1 - scrollTop / 680);
       heroSection.style.transform = `translateY(${translateY}px)`;
       heroSection.style.opacity = opacity.toFixed(3);
     }
@@ -124,6 +79,37 @@ document.addEventListener("DOMContentLoaded", () => {
       ambientGlow.style.transform = `translateX(-50%) translateY(${scrollTop * 0.16}px)`;
     }
 
+    // 2. Scroll-scrubbed side-to-center glide (requires deeper scrolling to settle)
+    trackedItems.forEach((item) => {
+      if (item.settled) return;
+
+      const rect = item.el.getBoundingClientRect();
+
+      // Starts entering when element top hits 98% of viewport height;
+      // finishes settling only after user scrolls it up to 34% of viewport height
+      const startPoint = vh * 0.98;
+      const endPoint = vh * 0.34;
+      const rawProgress = (startPoint - rect.top) / (startPoint - endPoint);
+      const clamped = Math.max(0, Math.min(1, rawProgress));
+      const eased = easeOutCubic(clamped);
+
+      const currentX = item.startX * (1 - eased);
+      const currentY = item.startY * (1 - eased);
+      const currentRotY = item.startRotateY * (1 - eased);
+      const currentScale = 0.92 + 0.08 * eased;
+      const currentOpacity = Math.min(1, eased * 1.25);
+
+      if (clamped >= 1) {
+        item.settled = true;
+        item.el.style.opacity = "1";
+        item.el.style.transform =
+          "perspective(1100px) translate3d(0px, 0px, 0px) rotateY(0deg) scale(1)";
+      } else {
+        item.el.style.opacity = currentOpacity.toFixed(3);
+        item.el.style.transform = `perspective(1100px) translate3d(${currentX.toFixed(1)}px, ${currentY.toFixed(1)}px, 0px) rotateY(${currentRotY.toFixed(2)}deg) scale(${currentScale.toFixed(3)})`;
+      }
+    });
+
     ticking = false;
   }
 
@@ -131,10 +117,17 @@ document.addEventListener("DOMContentLoaded", () => {
     "scroll",
     () => {
       if (!ticking) {
-        window.requestAnimationFrame(updateScrollEffects);
+        window.requestAnimationFrame(updateScrollScrub);
         ticking = true;
       }
     },
     { passive: true }
   );
+
+  window.addEventListener("resize", () => {
+    updateScrollScrub();
+  });
+
+  // Initial positioning pass on page load
+  updateScrollScrub();
 });
