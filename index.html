@@ -8,6 +8,66 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    .btn-gallery-hero {
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      color: var(--accent-cyan);
+      box-shadow: 0 4px 20px rgba(56, 189, 248, 0.14);
+    }
+
+    .btn-gallery-hero:hover {
+      background: rgba(56, 189, 248, 0.22);
+      border-color: var(--accent-cyan);
+      color: #ffffff;
+      box-shadow: 0 6px 26px rgba(56, 189, 248, 0.3);
+      transform: translateY(-2px);
+    }
+
+    .scroll-cue {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      margin-top: 2.6rem;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.75rem;
+      font-weight: 600;
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+      transition: color 0.2s ease, opacity 0.3s ease;
+      cursor: pointer;
+    }
+
+    .scroll-cue:hover {
+      color: var(--accent-cyan);
+    }
+
+    .scroll-mouse {
+      width: 22px;
+      height: 36px;
+      border: 2px solid rgba(255, 255, 255, 0.24);
+      border-radius: 99px;
+      display: flex;
+      justify-content: center;
+      padding-top: 6px;
+    }
+
+    .scroll-wheel {
+      width: 3px;
+      height: 7px;
+      background: var(--accent-cyan);
+      border-radius: 99px;
+      animation: scrollWheelBounce 1.7s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+    }
+
+    @keyframes scrollWheelBounce {
+      0% { transform: translateY(0); opacity: 1; }
+      70% { transform: translateY(11px); opacity: 0.2; }
+      100% { transform: translateY(0); opacity: 0; }
+    }
+  </style>
 </head>
 <body>
   <!-- High-Tech Preloader -->
@@ -35,17 +95,24 @@
   <main>
     <!-- Hero Section -->
     <section class="hero reveal">
-      <div class="badge">FULL-SERVICE DIGITAL STUDIO</div>
-      <h1>We Build Full-Stack <span class="gradient-text">Tech & Growth for Digital Communities</span></h1>
+      <div class="badge">Next-Gen Digital Craftsmanship</div>
+      <h1>Engineering Digital <span class="gradient-text">Growth for Digital Communities</span></h1>
       <p>From custom websites, mobile apps, and Discord bots to high-retention video editing and targeted growth campaigns—we engineer everything your brand needs to thrive.</p>
+      
       <div class="hero-actions">
         <a href="/web_service" class="btn btn-primary">Explore Web Services</a>
         <a href="/discord_service" class="btn btn-secondary">Explore Discord Bots</a>
+        <a href="/gallery" class="btn btn-gallery-hero">View Projects &rarr;</a>
       </div>
+
+      <a href="#what-we-do" id="hero-scroll-cue" class="scroll-cue" aria-label="Scroll down">
+        <div class="scroll-mouse"><div class="scroll-wheel"></div></div>
+        <span>Scroll</span>
+      </a>
     </section>
 
     <!-- Services Overview -->
-    <section class="container reveal">
+    <section id="what-we-do" class="container reveal">
       <div class="section-title">
         <h2>What We Do</h2>
         <p>End-to-end web architecture, platform refreshes, and community infrastructure.</p>
