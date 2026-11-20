@@ -1,5 +1,5 @@
 /* =========================================================
-   INNOVEXA STUDIO — HOMEPAGE SCROLL CHOREOGRAPHY & PARALLAX
+   INNOVEXA STUDIO — HOMEPAGE SIDE-ENTRY PERSPECTIVE ANIMATION
    Applies exclusively to index.html
    ========================================================= */
 
@@ -21,37 +21,26 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   document.body.appendChild(progressBar);
 
-  // 2. Smooth Scroll for the Hero "Scroll" Cue
-  const scrollCue = document.getElementById("hero-scroll-cue");
-  if (scrollCue) {
-    scrollCue.addEventListener("click", (e) => {
-      e.preventDefault();
-      const target = document.getElementById("what-we-do");
-      if (target) {
-        target.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-    });
-  }
-
-  // 3. Staggered 3D Entrance Reveal for Homepage Cards & Headings
-  const staggerObserver = new IntersectionObserver(
+  // 2. Side-Entry Perspective Observer for Cards & Section Titles
+  const sideObserver = new IntersectionObserver(
     (entries, observer) => {
       let batchIndex = 0;
       entries.forEach((entry) => {
         if (!entry.isIntersecting) return;
 
         const target = entry.target;
-        const delay = batchIndex * 115; // 115ms cascade per item
+        const delay = batchIndex * 110;
         batchIndex++;
 
         setTimeout(() => {
           target.style.opacity = "1";
-          target.style.transform = "perspective(1000px) rotateX(0deg) translateY(0) scale(1)";
+          target.style.transform =
+            "perspective(1100px) translate3d(0, 0, 0) rotateY(0deg) scale(1)";
 
-          // Restore fast hover transition after entrance completes
+          // Clear inline transition once settled so 3D hover tilt stays instant
           setTimeout(() => {
             target.style.transition = "";
-          }, 800);
+          }, 850);
         }, delay);
 
         observer.unobserve(target);
@@ -63,32 +52,53 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   );
 
-  function bindStaggerElements() {
-    const targets = document.querySelectorAll(
-      ".grid > .card, .section-title, .container > .card"
-    );
+  function bindSideEntryAnimations() {
+    // Animate grid cards alternating from left and right sides with 3D perspective
+    document.querySelectorAll(".grid").forEach((grid) => {
+      const cards = grid.querySelectorAll(".card");
+      cards.forEach((card, index) => {
+        if (card.dataset.sideBound) return;
+        card.dataset.sideBound = "true";
 
-    targets.forEach((el) => {
-      if (el.dataset.scrollBound) return;
-      el.dataset.scrollBound = "true";
-      el.style.opacity = "0";
-      el.style.transform = "perspective(1000px) rotateX(8deg) translateY(42px) scale(0.95)";
-      el.style.transition =
-        "opacity 0.78s cubic-bezier(0.16, 1, 0.3, 1), transform 0.78s cubic-bezier(0.16, 1, 0.3, 1)";
-      staggerObserver.observe(el);
+        // Left cards enter from left (-85px), right cards from right (+85px), middle card subtle right/left sweep
+        const fromLeft = index % 2 === 0;
+        const startX = fromLeft ? -85 : 85;
+        const startRotateY = fromLeft ? 14 : -14;
+
+        card.style.opacity = "0";
+        card.style.transform = `perspective(1100px) translate3d(${startX}px, 18px, -40px) rotateY(${startRotateY}deg) scale(0.95)`;
+        card.style.transition =
+          "opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.85s cubic-bezier(0.16, 1, 0.3, 1)";
+        sideObserver.observe(card);
+      });
     });
+
+    // Animate standalone section titles & bottom assurance card
+    document
+      .querySelectorAll(".section-title, .container > .card")
+      .forEach((el, idx) => {
+        if (el.dataset.sideBound) return;
+        el.dataset.sideBound = "true";
+
+        const startX = idx % 2 === 0 ? -55 : 55;
+        el.style.opacity = "0";
+        el.style.transform = `perspective(1100px) translate3d(${startX}px, 14px, 0) scale(0.97)`;
+        el.style.transition =
+          "opacity 0.75s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1)";
+        sideObserver.observe(el);
+      });
   }
 
-  bindStaggerElements();
+  bindSideEntryAnimations();
 
-  // Watch for live Firestore gallery cards on homepage
+  // Re-bind automatically when Firestore loads live gallery cards into #home-gallery-preview
   const homeGallery = document.getElementById("home-gallery-preview");
   if (homeGallery) {
-    const mutObs = new MutationObserver(() => bindStaggerElements());
+    const mutObs = new MutationObserver(() => bindSideEntryAnimations());
     mutObs.observe(homeGallery, { childList: true });
   }
 
-  // 4. Smooth Hero Parallax & Progress Bar Loop (60fps)
+  // 3. Smooth Hero Parallax & Scroll Progress Loop (60fps)
   const heroSection = document.querySelector(".hero");
   const ambientGlow = document.querySelector(".ambient-glow");
   let ticking = false;
@@ -104,14 +114,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (heroSection && scrollTop < 780) {
-      const translateY = scrollTop * 0.24;
-      const opacity = Math.max(0.15, 1 - scrollTop / 640);
+      const translateY = scrollTop * 0.22;
+      const opacity = Math.max(0.18, 1 - scrollTop / 640);
       heroSection.style.transform = `translateY(${translateY}px)`;
       heroSection.style.opacity = opacity.toFixed(3);
-    }
-
-    if (scrollCue) {
-      scrollCue.style.opacity = Math.max(0, 1 - scrollTop / 180).toFixed(2);
     }
 
     if (ambientGlow) {
