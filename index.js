@@ -14,30 +14,26 @@ document.addEventListener("DOMContentLoaded", () => {
     height: "3px",
     width: "0%",
     background: "linear-gradient(90deg, #38bdf8, #818cf8, #34d399)",
-    boxShadow: "0 0 12px rgba(56, 189, 248, 0.8)",
+    boxShadow: "0 0 12px rgba(56, 189, 248, 0.85)",
     zIndex: "99998",
     pointerEvents: "none",
     transition: "width 0.1s ease-out"
   });
   document.body.appendChild(progressBar);
 
-  // 2. Staggered Scroll Reveal for Homepage Cards & Headings
-  function setupStaggerObserver() {
-    const cards = document.querySelectorAll(
-      ".grid > .card, .section-title"
-    );
-
-    cards.forEach((el) => {
-      if (el.dataset.staggerReady) return;
-      el.dataset.staggerReady = "true";
-      el.style.opacity = "0";
-      el.style.transform = "translateY(36px) scale(0.96)";
-      el.style.transition =
-        "opacity 0.72s cubic-bezier(0.16, 1, 0.3, 1), transform 0.72s cubic-bezier(0.16, 1, 0.3, 1)";
-      staggerObserver.observe(el);
+  // 2. Smooth Scroll for the Hero "Scroll" Cue
+  const scrollCue = document.getElementById("hero-scroll-cue");
+  if (scrollCue) {
+    scrollCue.addEventListener("click", (e) => {
+      e.preventDefault();
+      const target = document.getElementById("what-we-do");
+      if (target) {
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
     });
   }
 
+  // 3. Staggered 3D Entrance Reveal for Homepage Cards & Headings
   const staggerObserver = new IntersectionObserver(
     (entries, observer) => {
       let batchIndex = 0;
@@ -45,17 +41,17 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!entry.isIntersecting) return;
 
         const target = entry.target;
-        const delay = batchIndex * 110; // 110ms cascade delay per card in row
+        const delay = batchIndex * 115; // 115ms cascade per item
         batchIndex++;
 
         setTimeout(() => {
           target.style.opacity = "1";
-          target.style.transform = "translateY(0) scale(1)";
+          target.style.transform = "perspective(1000px) rotateX(0deg) translateY(0) scale(1)";
 
-          // Clean up inline transition after entrance so 3D hover tilt stays snappy
+          // Restore fast hover transition after entrance completes
           setTimeout(() => {
             target.style.transition = "";
-          }, 750);
+          }, 800);
         }, delay);
 
         observer.unobserve(target);
@@ -63,48 +59,63 @@ document.addEventListener("DOMContentLoaded", () => {
     },
     {
       threshold: 0.12,
-      rootMargin: "0px 0px -35px 0px"
+      rootMargin: "0px 0px -30px 0px"
     }
   );
 
-  setupStaggerObserver();
+  function bindStaggerElements() {
+    const targets = document.querySelectorAll(
+      ".grid > .card, .section-title, .container > .card"
+    );
 
-  // Watch for dynamically loaded Firestore gallery preview cards on homepage
-  const homeGallery = document.getElementById("home-gallery-preview");
-  if (homeGallery) {
-    const mutationObs = new MutationObserver(() => {
-      setupStaggerObserver();
+    targets.forEach((el) => {
+      if (el.dataset.scrollBound) return;
+      el.dataset.scrollBound = "true";
+      el.style.opacity = "0";
+      el.style.transform = "perspective(1000px) rotateX(8deg) translateY(42px) scale(0.95)";
+      el.style.transition =
+        "opacity 0.78s cubic-bezier(0.16, 1, 0.3, 1), transform 0.78s cubic-bezier(0.16, 1, 0.3, 1)";
+      staggerObserver.observe(el);
     });
-    mutationObs.observe(homeGallery, { childList: true });
   }
 
-  // 3. Smooth Hero Depth Parallax & Progress Bar Loop (60fps)
+  bindStaggerElements();
+
+  // Watch for live Firestore gallery cards on homepage
+  const homeGallery = document.getElementById("home-gallery-preview");
+  if (homeGallery) {
+    const mutObs = new MutationObserver(() => bindStaggerElements());
+    mutObs.observe(homeGallery, { childList: true });
+  }
+
+  // 4. Smooth Hero Parallax & Progress Bar Loop (60fps)
   const heroSection = document.querySelector(".hero");
   const ambientGlow = document.querySelector(".ambient-glow");
   let ticking = false;
 
-  function onScrollFrame() {
+  function updateScrollEffects() {
     const scrollTop = window.scrollY || document.documentElement.scrollTop;
     const docHeight =
       document.documentElement.scrollHeight - document.documentElement.clientHeight;
 
-    // Update top neon scroll bar
     if (docHeight > 0) {
       const percent = Math.min(100, (scrollTop / docHeight) * 100);
       progressBar.style.width = `${percent}%`;
     }
 
-    // Hero parallax drift & soft fade out as user scrolls down
-    if (heroSection && scrollTop < 750) {
+    if (heroSection && scrollTop < 780) {
       const translateY = scrollTop * 0.24;
-      const opacity = Math.max(0.18, 1 - scrollTop / 620);
+      const opacity = Math.max(0.15, 1 - scrollTop / 640);
       heroSection.style.transform = `translateY(${translateY}px)`;
       heroSection.style.opacity = opacity.toFixed(3);
     }
 
-    // Ambient glow depth shift
+    if (scrollCue) {
+      scrollCue.style.opacity = Math.max(0, 1 - scrollTop / 180).toFixed(2);
+    }
+
     if (ambientGlow) {
-      ambientGlow.style.transform = `translateX(-50%) translateY(${scrollTop * 0.15}px)`;
+      ambientGlow.style.transform = `translateX(-50%) translateY(${scrollTop * 0.16}px)`;
     }
 
     ticking = false;
@@ -114,7 +125,7 @@ document.addEventListener("DOMContentLoaded", () => {
     "scroll",
     () => {
       if (!ticking) {
-        window.requestAnimationFrame(onScrollFrame);
+        window.requestAnimationFrame(updateScrollEffects);
         ticking = true;
       }
     },
