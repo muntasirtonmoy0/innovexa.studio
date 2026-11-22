@@ -5,68 +5,110 @@ const CurrencyManager = {
     symbol: '$',
     detected: false
   },
+  _initPromise: null,
 
-  async init() {
-    const cached = sessionStorage.getItem('innovexa_currency');
-    if (cached) {
-      this.state = JSON.parse(cached);
-      return this.state;
-    }
+  init() {
+    if (this._initPromise) return this._initPromise;
 
-    try {
-      // 1. Silent IP-based country & currency detection (no GPS popup needed)
-      const geoRes = await fetch('https://ipapi.co/json/');
-      const geoData = await geoRes.json();
-      const targetCurrency = geoData.currency || 'USD';
-
-      if (targetCurrency === 'USD') {
-        this.state.detected = true;
-        sessionStorage.setItem('innovexa_currency', JSON.stringify(this.state));
+    this._initPromise = (async () => {
+      const cached = sessionStorage.getItem('innovexa_currency_v2');
+      if (cached) {
+        this.state = JSON.parse(cached);
+        window.dispatchEvent(new CustomEvent('currency-ready', { detail: this.state }));
         return this.state;
       }
 
-      // 2. Fetch live USD exchange rate
-      const rateRes = await fetch('https://open.er-api.com/v6/latest/USD');
-      const rateData = await rateRes.json();
-      const rate = rateData.rates?.[targetCurrency];
+      try {
+        let targetCurrency = null;
 
-      if (rate) {
-        this.state = {
-          currency: targetCurrency,
-          rate: rate,
-          symbol: this.getSymbol(targetCurrency),
-          detected: true
-        };
-        sessionStorage.setItem('innovexa_currency', JSON.stringify(this.state));
+        // 1. Primary IP geolocation (ipwho.is - no strict rate limits, CORS friendly)
+        try {
+          const res1 = await fetch('https://ipwho.is/');
+          const data1 = await res1.json();
+          if (data1 && data1.success && data1.currency?.code) {
+            targetCurrency = data1.currency.code;
+          }
+        } catch (e) {
+          console.warn('Primary geo lookup failed, trying fallback...');
+        }
+
+        // 2. Fallback IP geolocation (ipapi.co)
+        if (!targetCurrency) {
+          const res2 = await fetch('https://ipapi.co/json/');
+          const data2 = await res2.json();
+          if (data2 && data2.currency) {
+            targetCurrency = data2.currency;
+          }
+        }
+
+        targetCurrency = (targetCurrency || 'USD').toUpperCase();
+
+        if (targetCurrency === 'USD') {
+          this.state.detected = true;
+          sessionStorage.setItem('innovexa_currency_v2', JSON.stringify(this.state));
+          window.dispatchEvent(new CustomEvent('currency-ready', { detail: this.state }));
+          return this.state;
+        }
+
+        // 3. Fetch live USD exchange rate
+        const rateRes = await fetch('https://open.er-api.com/v6/latest/USD');
+        const rateData = await rateRes.json();
+        const rate = rateData?.rates?.[targetCurrency];
+
+        if (rate) {
+          this.state = {
+            currency: targetCurrency,
+            rate: rate,
+            symbol: this.getSymbol(targetCurrency),
+            detected: true
+          };
+          sessionStorage.setItem('innovexa_currency_v2', JSON.stringify(this.state));
+        }
+      } catch (err) {
+        console.warn('Currency detection failed, defaulting to USD:', err);
       }
-    } catch (err) {
-      // Ad-blocker or network failure -> silently stays on USD
-      console.warn('Currency detection skipped, defaulting to USD.');
-    }
 
-    return this.state;
+      window.dispatchEvent(new CustomEvent('currency-ready', { detail: this.state }));
+      return this.state;
+    })();
+
+    return this._initPromise;
   },
 
   getSymbol(currencyCode) {
+    const commonSymbols = {
+      BDT: '৳',
+      INR: '₹',
+      EUR: '€',
+      GBP: '£',
+      CAD: 'CA$',
+      AUD: 'A$',
+      AED: 'AED ',
+      SAR: 'SAR '
+    };
+    if (commonSymbols[currencyCode]) return commonSymbols[currencyCode];
+
     try {
       return (0).toLocaleString('en', {
         style: 'currency',
         currency: currencyCode,
         minimumFractionDigits: 0,
         maximumFractionDigits: 0
-      }).replace(/\d/g, '').trim();
+      }).replace(/\d/g, '').trim() + ' ';
     } catch {
       return currencyCode + ' ';
     }
   },
 
   formatBillingPrice(usdAmount) {
-    const baseUsd = `$${Number(usdAmount).toFixed(2)} USD`;
+    const amount = Number(usdAmount) || 0;
+    const baseUsd = `$${amount.toFixed(2)} USD`;
+
     if (!this.state.detected || this.state.currency === 'USD') {
       return baseUsd;
     }
 
-    const converted = (Number(usdAmount) * this.state.rate).toLocaleString(undefined, {
+    const converted = (amount * this.state.rate).toLocaleString(undefined, {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     });
@@ -75,5 +117,6 @@ const CurrencyManager = {
   }
 };
 
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', () => CurrencyManager.init());
+// Explicitly attach to window so <script type="module"> can always access it
+window.CurrencyManager = CurrencyManager;
+CurrencyManager.init();
