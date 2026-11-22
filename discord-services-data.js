@@ -2,8 +2,8 @@ export const discordServices = [
   {
     id: "bot-starter-mod",
     name: "Custom Bot: Starter Moderation",
-    price: 100,
-    currency: "BDT",
+    price: 0.99,
+    currency: "USD",
     icon: "🛡️",
     description: "Essential moderation commands and automated welcome alerts to keep your community safe and organized.",
     features: [
@@ -19,8 +19,8 @@ export const discordServices = [
   {
     id: "bot-pro-mod",
     name: "Custom Bot: Intermediate Suite",
-    price: 250,
-    currency: "BDT",
+    price: 2.49,
+    currency: "USD",
     icon: "⚡",
     description: "Comprehensive community automation featuring verification, invite auditing, leveling, and ticket management.",
     features: [
@@ -37,8 +37,8 @@ export const discordServices = [
   {
     id: "bot-elite-mod",
     name: "Custom Bot: Advanced Automation",
-    price: 500,
-    currency: "BDT",
+    price: 4.49,
+    currency: "USD",
     icon: "👑",
     description: "Intelligent auto-defense, chat analytics, persistent economy, and high-frequency moderation.",
     features: [
@@ -56,8 +56,8 @@ export const discordServices = [
   {
     id: "bot-omni-enterprise",
     name: "Custom Bot: Omni Supreme Tier",
-    price: 1000,
-    currency: "BDT",
+    price: 8.99,
+    currency: "USD",
     icon: "🌌",
     description: "The absolute summit of Discord engineering: all bot features combined with a private web control panel.",
     features: [
@@ -75,8 +75,8 @@ export const discordServices = [
   {
     id: "discord-server-management",
     name: "Discord Server Management",
-    price: 100,
-    currency: "BDT",
+    price: 0.99,
+    currency: "USD",
     icon: "📋",
     description: "Professional administrative maintenance, channel organization, bot upkeep, and permission auditing.",
     features: [
@@ -91,8 +91,8 @@ export const discordServices = [
   {
     id: "discord-server-creation-advanced",
     name: "Advanced Discord Server Creation",
-    price: 300,
-    currency: "BDT",
+    price: 2.99,
+    currency: "USD",
     icon: "✨",
     description: "Complete from-scratch community setup with professional aesthetics, auto-roles, and security gates.",
     features: [
