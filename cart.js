@@ -46,7 +46,14 @@ export function clearCart() {
 }
 
 export function getCartTotal() {
-  return getCart().reduce((sum, item) => sum + item.price * (item.quantity || 1), 0);
+  return Number(getCart().reduce((sum, item) => sum + item.price * (item.quantity || 1), 0).toFixed(2));
+}
+
+function formatCartTotalDisplay(usdTotal) {
+  if (window.CurrencyManager) {
+    return window.CurrencyManager.formatBillingPrice(usdTotal);
+  }
+  return `$${Number(usdTotal).toFixed(2)} USD`;
 }
 
 // Inject Floating Cart Button & Side Drawer UI
@@ -74,9 +81,9 @@ const drawerHTML = `
   </div>
 
   <div style="padding:1.4rem; border-top:1px solid rgba(255,255,255,0.08); background:rgba(15,17,26,0.6);">
-    <div style="display:flex; justify-content:space-between; font-size:1.1rem; font-weight:700; color:#fff; margin-bottom:1.2rem;">
+    <div style="display:flex; justify-content:space-between; gap:10px; font-size:1.05rem; font-weight:700; color:#fff; margin-bottom:1.2rem;">
       <span>Total:</span>
-      <span id="cart-drawer-total" style="color:var(--accent-cyan);">৳0 BDT</span>
+      <span id="cart-drawer-total" style="color:var(--accent-cyan); text-align:right;">$0.00 USD</span>
     </div>
     <a href="/payment" id="cart-checkout-btn" class="btn btn-primary" style="width:100%; text-align:center;">Proceed to Checkout</a>
   </div>
@@ -125,7 +132,7 @@ export function updateCartUI() {
         Your cart is empty.<br>Browse our web and bot services to add items.
       </div>
     `;
-    totalEl.innerText = "৳0 BDT";
+    totalEl.innerText = "$0.00 USD";
     return;
   }
 
@@ -134,19 +141,22 @@ export function updateCartUI() {
       <div>
         <div style="font-weight:600; font-size:0.9rem; color:#fff;">${item.name}</div>
         <div style="font-size:0.8rem; color:var(--accent-cyan); margin-top:2px;">
-          ৳${item.price.toLocaleString()} BDT ${item.quantity > 1 ? `&times; ${item.quantity}` : ""}
+          $${Number(item.price).toFixed(2)} USD ${item.quantity > 1 ? `&times; ${item.quantity}` : ""}
         </div>
       </div>
       <button data-remove="${item.id}" style="background:none; border:none; color:#f87171; cursor:pointer; font-size:1.1rem; padding:4px 8px;">🗑️</button>
     </div>
   `).join("");
 
-  totalEl.innerText = `৳${getCartTotal().toLocaleString()} BDT`;
+  totalEl.innerText = formatCartTotalDisplay(getCartTotal());
 
   itemsList.querySelectorAll("[data-remove]").forEach(btn => {
     btn.onclick = () => removeFromCart(btn.getAttribute("data-remove"));
   });
 }
 
-// Initial sync on script load
+// Initial sync on script load & re-sync after CurrencyManager resolves regional rates
 updateCartUI();
+if (window.CurrencyManager) {
+  window.CurrencyManager.init().then(() => updateCartUI());
+}
