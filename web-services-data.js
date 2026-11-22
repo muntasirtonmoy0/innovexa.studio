@@ -2,8 +2,8 @@ export const webServices = [
   {
     id: "web-fault-finding",
     name: "Website Bug Fixing & Fault Finding",
-    price: 500,
-    currency: "BDT",
+    price: 4.49,
+    currency: "USD",
     icon: "🔍",
     description: "Deep diagnostic inspection to locate and resolve UI breaks, script errors, broken forms, and mobile responsive glitches.",
     features: [
@@ -18,8 +18,8 @@ export const webServices = [
   {
     id: "portfolio-website",
     name: "Personal Portfolio Website",
-    price: 500,
-    currency: "BDT",
+    price: 4.49,
+    currency: "USD",
     icon: "💼",
     description: "Sleek, modern showcase website designed for developers, creators, freelancers, and students looking to display their projects.",
     features: [
@@ -34,8 +34,8 @@ export const webServices = [
   {
     id: "website-management",
     name: "Monthly Website Management",
-    price: 700,
-    currency: "BDT",
+    price: 5.99,
+    currency: "USD",
     icon: "🛡️",
     description: "Ongoing technical upkeep, routine backups, performance speed tuning, and text/content updates to keep your site fresh.",
     features: [
@@ -50,8 +50,8 @@ export const webServices = [
   {
     id: "store-website",
     name: "Online Store / E-Commerce Website",
-    price: 1000,
-    currency: "BDT",
+    price: 8.49,
+    currency: "USD",
     icon: "🛍️",
     description: "Digital retail store tailored for local shops or digital products with product showcases and checkout support.",
     features: [
@@ -66,8 +66,8 @@ export const webServices = [
   {
     id: "landing-page-conversion",
     name: "High-Converting Sales Landing Page",
-    price: 1200,
-    currency: "BDT",
+    price: 9.99,
+    currency: "USD",
     icon: "🚀",
     description: "Single-page powerhouse engineered specifically to convert visitors into paying clients or community members.",
     features: [
@@ -82,8 +82,8 @@ export const webServices = [
   {
     id: "custom-website",
     name: "Bespoke Custom Website",
-    price: 1500,
-    currency: "BDT",
+    price: 12.49,
+    currency: "USD",
     icon: "🎨",
     description: "Fully personalized website tailored to your exact visual branding, custom animations, and layout requirements.",
     features: [
@@ -98,8 +98,8 @@ export const webServices = [
   {
     id: "fullstack-firebase-portal",
     name: "Full-Stack Dynamic Web App (Firebase)",
-    price: 2500,
-    currency: "BDT",
+    price: 20.99,
+    currency: "USD",
     icon: "⚙️",
     description: "Complete dynamic application backed by Google Firebase with user authentication and real-time database workflows.",
     features: [
@@ -114,8 +114,8 @@ export const webServices = [
   {
     id: "api-backend-integration",
     name: "Custom API & Bot Bridge Dashboard",
-    price: 3500,
-    currency: "BDT",
+    price: 29.49,
+    currency: "USD",
     icon: "🔌",
     description: "Web management panel connected directly to your Discord bots, game servers, or external REST APIs.",
     features: [
@@ -130,8 +130,8 @@ export const webServices = [
   {
     id: "enterprise-turnkey-platform",
     name: "Omni Turnkey Web Platform",
-    price: 5000,
-    currency: "BDT",
+    price: 41.99,
+    currency: "USD",
     icon: "👑",
     description: "The complete enterprise package: custom multi-page design, full database backend, admin control panel, and continuous support.",
     features: [
