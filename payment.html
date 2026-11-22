@@ -97,6 +97,7 @@
     .summary-line {
       display: flex;
       justify-content: space-between;
+      gap: 12px;
       margin-bottom: 0.8rem;
       font-size: 0.95rem;
       color: var(--text-muted);
@@ -106,7 +107,7 @@
       border-top: 1px solid var(--card-border);
       padding-top: 1rem;
       margin-top: 1rem;
-      font-size: 1.25rem;
+      font-size: 1.15rem;
       font-weight: 700;
       color: #fff;
     }
@@ -332,11 +333,11 @@
           </div>
           <div class="summary-line">
             <span>Subtotal</span>
-            <span id="summary-subtotal" style="color: #fff;">৳0 BDT</span>
+            <span id="summary-subtotal" style="color: #fff; text-align: right;">$0.00 USD</span>
           </div>
           <div class="summary-line" id="summary-discount-row" style="display:none; color:#34d399;">
             <span>Coupon (<span id="applied-coupon-tag"></span>)</span>
-            <span id="summary-discount-amount">-৳0 BDT</span>
+            <span id="summary-discount-amount" style="text-align: right;">-$0.00 USD</span>
           </div>
           <div class="summary-line">
             <span>Deployment Assistance</span>
@@ -355,7 +356,7 @@
 
           <div class="summary-line total">
             <span>Total Payable</span>
-            <span id="summary-price" style="color: var(--accent-cyan);">৳0 BDT</span>
+            <span id="summary-price" style="color: var(--accent-cyan); text-align: right;">$0.00 USD</span>
           </div>
           <p style="font-size: 0.78rem; color: var(--text-muted); margin-top: 1rem; line-height: 1.4;">
             Once confirmed, an invoice is generated in your profile and our team will verify your transaction immediately.
@@ -386,6 +387,7 @@
 
   <script src="app.js"></script>
   <script src="navbar.js"></script>
+  <script src="currency.js"></script>
   <script type="module" src="cart.js"></script>
   <script type="module" src="auth-modal.js"></script>
   <script type="module">
@@ -408,6 +410,13 @@
         routingNumber: "245180134"
       }
     };
+
+    function formatDisplayPrice(usdAmount) {
+      if (window.CurrencyManager) {
+        return window.CurrencyManager.formatBillingPrice(usdAmount);
+      }
+      return `$${Number(usdAmount).toFixed(2)} USD`;
+    }
 
     // 1. Initialize EmailJS
     if (window.emailjs) {
@@ -582,25 +591,25 @@
       let discountValue = 0;
       if (appliedCoupon) {
         if (appliedCoupon.type === "percent") {
-          discountValue = Math.round(baseSubtotal * (appliedCoupon.value / 100));
+          discountValue = Number((baseSubtotal * (appliedCoupon.value / 100)).toFixed(2));
         } else {
           discountValue = Math.min(baseSubtotal, appliedCoupon.value);
         }
         discountRow.style.display = "flex";
         appliedCouponTag.innerText = appliedCoupon.code;
-        discountAmountEl.innerText = `-৳${discountValue.toLocaleString()} BDT`;
+        discountAmountEl.innerText = `-${formatDisplayPrice(discountValue)}`;
       } else {
         discountRow.style.display = "none";
       }
 
-      const finalTotal = Math.max(0, baseSubtotal - discountValue);
-      summarySubtotal.innerText = `৳${baseSubtotal.toLocaleString()} BDT`;
-      summaryPrice.innerText = `৳${finalTotal.toLocaleString()} BDT`;
+      const finalTotal = Number(Math.max(0, baseSubtotal - discountValue).toFixed(2));
+      summarySubtotal.innerText = formatDisplayPrice(baseSubtotal);
+      summaryPrice.innerText = formatDisplayPrice(finalTotal);
       return { discountValue, finalTotal };
     }
 
-    if (isCartCheckout) {
-      document.getElementById("single-service-group").style.display = "none";
+    function renderCartPreviewList() {
+      if (!isCartCheckout) return;
       const cartPreview = document.getElementById("cart-items-preview");
       const cartContent = document.getElementById("cart-items-content");
       cartPreview.style.display = "block";
@@ -611,14 +620,19 @@
       });
 
       cartContent.innerHTML = enrichedCart.map(item => `
-        <div style="display:flex; justify-content:space-between; font-size:0.86rem; color:#fff;">
+        <div style="display:flex; justify-content:space-between; gap:10px; font-size:0.86rem; color:#fff;">
           <span>${item.name} (${item.quantity}x)</span>
-          <span style="color:var(--accent-cyan);">৳${(item.price * item.quantity).toLocaleString()} BDT</span>
+          <span style="color:var(--accent-cyan); text-align:right;">${formatDisplayPrice(item.price * item.quantity)}</span>
         </div>
       `).join("");
 
-      baseSubtotal = enrichedCart.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+      baseSubtotal = Number(enrichedCart.reduce((sum, i) => sum + (i.price * i.quantity), 0).toFixed(2));
       summaryTitle.innerText = `${enrichedCart.length} Service(s)`;
+    }
+
+    if (isCartCheckout) {
+      document.getElementById("single-service-group").style.display = "none";
+      renderCartPreviewList();
       recalculateTotals();
       checkVideoMakingRequirement();
     } else {
@@ -643,6 +657,14 @@
       serviceSelect.onchange = updateSummary;
       serviceSelect.addEventListener("change", updateSummary);
       updateSummary();
+    }
+
+    // Re-render regional currency amounts once CurrencyManager finishes IP/rate lookup
+    if (window.CurrencyManager) {
+      window.CurrencyManager.init().then(() => {
+        if (isCartCheckout) renderCartPreviewList();
+        recalculateTotals();
+      });
     }
 
     // Apply Coupon Handler
@@ -695,7 +717,7 @@
 
         couponFeedback.style.display = "block";
         couponFeedback.style.color = "#34d399";
-        const label = appliedCoupon.type === "percent" ? `${appliedCoupon.value}% OFF` : `৳${appliedCoupon.value} OFF`;
+        const label = appliedCoupon.type === "percent" ? `${appliedCoupon.value}% OFF` : `$${appliedCoupon.value} USD OFF`;
         couponFeedback.innerText = `✔ Coupon applied (${label})`;
         recalculateTotals();
       } catch (err) {
@@ -775,6 +797,7 @@
       }
 
       const { discountValue, finalTotal } = recalculateTotals();
+      const formattedTotalDisplay = formatDisplayPrice(finalTotal);
       const phoneNumber = document.getElementById('contact-phone').value.trim() || "N/A";
       const transferRoute = document.getElementById('transfer-route')?.value || selectedMethod;
       const senderAccount = document.getElementById('sender-account-info')?.value.trim() || "N/A";
@@ -793,10 +816,11 @@
           userEmail: currentUser.email,
           userName: customerName,
           items: orderItems,
-          subtotalBDT: baseSubtotal,
+          subtotalUSD: baseSubtotal,
           couponUsed: appliedCoupon ? appliedCoupon.code : null,
-          discountBDT: discountValue,
-          totalBDT: finalTotal,
+          discountUSD: discountValue,
+          totalUSD: finalTotal,
+          billingDisplay: formattedTotalDisplay,
           paymentMethod: paymentSummaryLabel,
           transferRoute: transferRoute,
           senderAccount: senderAccount,
@@ -821,7 +845,7 @@
           }
         }
 
-        const couponNote = appliedCoupon ? `\nCoupon Applied: ${appliedCoupon.code} (-৳${discountValue.toLocaleString()} BDT)` : "";
+        const couponNote = appliedCoupon ? `\nCoupon Applied: ${appliedCoupon.code} (-${formatDisplayPrice(discountValue)})` : "";
         const paymentAuditNote = `\nPayment Route: ${paymentSummaryLabel}\nSender Account: ${senderAccount}\nTransaction ID: ${transactionId}`;
 
         const emailParams = {
@@ -830,8 +854,8 @@
           customer_email: currentUser.email,
           discord_handle: phoneNumber,
           payment_method: paymentSummaryLabel,
-          total_amount: `৳${finalTotal.toLocaleString()} BDT`,
-          order_items: orderItems.map(i => `- ${i.name} (${i.quantity}x) = ৳${(i.price * i.quantity).toLocaleString()} BDT`).join("\n") + couponNote + paymentAuditNote,
+          total_amount: formattedTotalDisplay,
+          order_items: orderItems.map(i => `- ${i.name} (${i.quantity}x) = $${(i.price * i.quantity).toFixed(2)} USD`).join("\n") + couponNote + paymentAuditNote,
           project_notes: notes
         };
 
