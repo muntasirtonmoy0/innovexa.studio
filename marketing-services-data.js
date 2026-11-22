@@ -3,7 +3,8 @@ export const marketingServices = [
     id: "mkt-seo-audit",
     name: "Complete SEO & Speed Optimization",
     icon: "📈",
-    price: 2500,
+    price: 20.99,
+    currency: "USD",
     description: "Rank higher on Google with technical SEO, meta structuring, sitemap indexing, and Core Web Vitals fixes.",
     features: [
       "On-page keyword & meta tag optimization",
@@ -17,7 +18,8 @@ export const marketingServices = [
     id: "mkt-ads-growth",
     name: "Meta / Google Ad Campaign Setup",
     icon: "🎯",
-    price: 4500,
+    price: 37.99,
+    currency: "USD",
     description: "End-to-end targeted ad campaign creation, pixel tracking, and conversion optimization for your brand.",
     features: [
       "Facebook/Instagram & Google Ads setup",
