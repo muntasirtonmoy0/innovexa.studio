@@ -36,7 +36,7 @@ export function getEnrichedService(service) {
   const inStock = (ov.inStock !== false) && (stockCount > 0);
   const discountPercent = Number(ov.discountPercent) || 0;
   const finalPrice = discountPercent > 0
-    ? Math.round(service.price * (1 - discountPercent / 100))
+    ? Number((service.price * (1 - discountPercent / 100)).toFixed(2))
     : service.price;
 
   return {
@@ -77,8 +77,8 @@ function drawCards(containerId, servicesList) {
       : ``;
 
     const priceMarkup = s.discountPercent > 0
-      ? `<span style="text-decoration:line-through; color:var(--text-muted); font-size:0.95rem; font-weight:500; margin-right:6px;">৳${s.originalPrice.toLocaleString()}</span> ৳${s.price.toLocaleString()}`
-      : `৳${s.price.toLocaleString()}`;
+      ? `<span style="text-decoration:line-through; color:var(--text-muted); font-size:0.95rem; font-weight:500; margin-right:6px;">$${s.originalPrice.toFixed(2)}</span> $${s.price.toFixed(2)}`
+      : `$${s.price.toFixed(2)}`;
 
     const actionButtons = s.inStock
       ? `
@@ -109,7 +109,7 @@ function drawCards(containerId, servicesList) {
         <h3>${s.name}</h3>
         <p>${s.description}</p>
         <div style="font-size: 1.4rem; font-weight: 800; color: var(--accent-cyan); margin-bottom: 1rem;">
-          ${priceMarkup} <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: normal;">BDT</span>
+          ${priceMarkup} <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: normal;">USD</span>
         </div>
         <ul class="card-features">
           ${s.features.map(f => `<li>${f}</li>`).join("")}
@@ -165,7 +165,7 @@ function drawDropdown(selectId, includeAllOption) {
         const tag = !s.inStock
           ? " [OUT OF STOCK]"
           : ` [${s.stockCount} in stock${s.discountPercent > 0 ? ` • ${s.discountPercent}% OFF` : ""}]`;
-        return `<option value="${s.name}" data-plan="${s.id}" data-price="${s.price}" ${!s.inStock ? 'disabled' : ''}>${s.name} — ৳${s.price.toLocaleString()} BDT${tag}</option>`;
+        return `<option value="${s.name}" data-plan="${s.id}" data-price="${s.price}" ${!s.inStock ? 'disabled' : ''}>${s.name} — $${s.price.toFixed(2)} USD${tag}</option>`;
       }).join("")}
     </optgroup>
   `).join("");
