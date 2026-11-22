@@ -11,46 +11,73 @@ const CurrencyManager = {
     if (this._initPromise) return this._initPromise;
 
     this._initPromise = (async () => {
-      const cached = sessionStorage.getItem('innovexa_currency_v2');
-      if (cached) {
-        this.state = JSON.parse(cached);
-        window.dispatchEvent(new CustomEvent('currency-ready', { detail: this.state }));
-        return this.state;
+      try {
+        const cached = JSON.parse(sessionStorage.getItem('innovexa_currency_v3') || 'null');
+        if (cached && cached.detected && cached.currency && cached.rate) {
+          this.state = cached;
+          window.dispatchEvent(new CustomEvent('currency-ready', { detail: this.state }));
+          return this.state;
+        }
+      } catch {}
+
+      let targetCurrency = null;
+
+      // 1. Primary IP geolocation (ipwho.is)
+      try {
+        const res1 = await fetch('https://ipwho.is/', { cache: 'no-store' });
+        const data1 = await res1.json();
+        if (data1 && data1.success && data1.currency?.code) {
+          targetCurrency = data1.currency.code;
+        }
+      } catch (e) {
+        console.warn('ipwho.is lookup failed:', e);
       }
 
-      try {
-        let targetCurrency = null;
-
-        // 1. Primary IP geolocation (ipwho.is - no strict rate limits, CORS friendly)
+      // 2. Secondary IP geolocation (ipapi.co)
+      if (!targetCurrency) {
         try {
-          const res1 = await fetch('https://ipwho.is/');
-          const data1 = await res1.json();
-          if (data1 && data1.success && data1.currency?.code) {
-            targetCurrency = data1.currency.code;
-          }
-        } catch (e) {
-          console.warn('Primary geo lookup failed, trying fallback...');
-        }
-
-        // 2. Fallback IP geolocation (ipapi.co)
-        if (!targetCurrency) {
-          const res2 = await fetch('https://ipapi.co/json/');
+          const res2 = await fetch('https://ipapi.co/json/', { cache: 'no-store' });
           const data2 = await res2.json();
           if (data2 && data2.currency) {
             targetCurrency = data2.currency;
           }
+        } catch (e) {
+          console.warn('ipapi.co lookup failed:', e);
         }
+      }
 
-        targetCurrency = (targetCurrency || 'USD').toUpperCase();
+      // 3. Timezone fallback if IP APIs are blocked by an ad-blocker/VPN
+      if (!targetCurrency) {
+        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+        const tzMap = {
+          'Asia/Dhaka': 'BDT',
+          'Asia/Kolkata': 'INR',
+          'Asia/Calcutta': 'INR',
+          'Europe/London': 'GBP',
+          'Europe/Lisbon': 'EUR',
+          'Asia/Dubai': 'AED',
+          'Asia/Riyadh': 'SAR'
+        };
+        if (tzMap[tz]) targetCurrency = tzMap[tz];
+      }
 
-        if (targetCurrency === 'USD') {
-          this.state.detected = true;
-          sessionStorage.setItem('innovexa_currency_v2', JSON.stringify(this.state));
-          window.dispatchEvent(new CustomEvent('currency-ready', { detail: this.state }));
-          return this.state;
-        }
+      if (!targetCurrency) {
+        // Do NOT cache failed detection so next reload retries
+        window.dispatchEvent(new CustomEvent('currency-ready', { detail: this.state }));
+        return this.state;
+      }
 
-        // 3. Fetch live USD exchange rate
+      targetCurrency = targetCurrency.toUpperCase();
+
+      if (targetCurrency === 'USD') {
+        this.state = { currency: 'USD', rate: 1, symbol: '$', detected: true };
+        sessionStorage.setItem('innovexa_currency_v3', JSON.stringify(this.state));
+        window.dispatchEvent(new CustomEvent('currency-ready', { detail: this.state }));
+        return this.state;
+      }
+
+      // 4. Fetch live USD exchange rate
+      try {
         const rateRes = await fetch('https://open.er-api.com/v6/latest/USD');
         const rateData = await rateRes.json();
         const rate = rateData?.rates?.[targetCurrency];
@@ -62,10 +89,10 @@ const CurrencyManager = {
             symbol: this.getSymbol(targetCurrency),
             detected: true
           };
-          sessionStorage.setItem('innovexa_currency_v2', JSON.stringify(this.state));
+          sessionStorage.setItem('innovexa_currency_v3', JSON.stringify(this.state));
         }
       } catch (err) {
-        console.warn('Currency detection failed, defaulting to USD:', err);
+        console.warn('Exchange rate fetch failed:', err);
       }
 
       window.dispatchEvent(new CustomEvent('currency-ready', { detail: this.state }));
@@ -117,6 +144,5 @@ const CurrencyManager = {
   }
 };
 
-// Explicitly attach to window so <script type="module"> can always access it
 window.CurrencyManager = CurrencyManager;
 CurrencyManager.init();
