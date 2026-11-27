@@ -25,7 +25,7 @@
       transform: translateY(-2px);
     }
 
-    /* 3D Interactive Animated Video Banner Backdrop */
+    /* 3D Interactive Animated Video Banner Backdrop (Expanded Full-Bleed Scale) */
     .hero-3d-banner-stage {
       position: fixed;
       inset: 0;
@@ -39,22 +39,22 @@
     }
 
     .hero-3d-banner-card {
-      width: min(780px, 94vw);
+      width: min(1550px, 112vw);
       transform-style: preserve-3d;
       will-change: transform, opacity;
-      opacity: 0.36;
-      filter: drop-shadow(0 0 45px rgba(56, 189, 248, 0.28));
+      opacity: 0.44;
+      filter: drop-shadow(0 0 60px rgba(56, 189, 248, 0.36));
     }
 
     .hero-3d-banner-card video {
       width: 100%;
       height: auto;
       display: block;
-      border-radius: 28px;
+      border-radius: 0;
       /* Blends the dark video edges cleanly into your site's background */
       mix-blend-mode: lighten;
-      -webkit-mask-image: radial-gradient(ellipse 68% 64% at 50% 50%, #000 52%, transparent 96%);
-      mask-image: radial-gradient(ellipse 68% 64% at 50% 50%, #000 52%, transparent 96%);
+      -webkit-mask-image: radial-gradient(ellipse 80% 78% at 50% 50%, #000 64%, transparent 99%);
+      mask-image: radial-gradient(ellipse 80% 78% at 50% 50%, #000 64%, transparent 99%);
     }
 
     /* Keep floating cubes & page sections cleanly layered above the 3D banner */
