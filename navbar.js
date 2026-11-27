@@ -1,7 +1,19 @@
 /* =========================================================
-   INNOVEXA STUDIO - CENTRALIZED DYNAMIC NAVBAR COMPONENT
+   INNOVEXA STUDIO - CENTRALIZED DYNAMIC NAVBAR & FAVICON
    Clean URLs enabled for Vercel (/profile, /payment, etc.)
    ========================================================= */
+
+// Set Browser Tab Favicon automatically across every page
+(function setFavicon() {
+  let link = document.querySelector("link[rel~='icon']");
+  if (!link) {
+    link = document.createElement("link");
+    link.rel = "icon";
+    document.head.appendChild(link);
+  }
+  link.type = "image/png";
+  link.href = "/logo.png";
+})();
 
 const rawPath = window.location.pathname.split("/").pop().replace(/\.html$/, "") || "index";
 
@@ -54,8 +66,13 @@ const isDropdownActive = servicesAndProducts.some(item => item.slug === rawPath)
 
 const navbarHTML = `
   <nav class="navbar">
-    <a href="/" class="nav-brand">
-      <span class="brand-dot"></span>Innovexa Studio
+    <a href="/" class="nav-brand" style="display: inline-flex; align-items: center; gap: 10px;">
+      <img
+        src="/logo.png"
+        alt="Innovexa Studio Logo"
+        style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid rgba(56, 189, 248, 0.45); box-shadow: 0 0 12px rgba(56, 189, 248, 0.25);"
+      />
+      <span>Innovexa Studio</span>
     </a>
     <ul class="nav-links">
       <li><a href="/" class="${rawPath === 'index' ? 'active' : ''}">Home</a></li>
