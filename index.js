@@ -68,8 +68,8 @@ document.addEventListener("DOMContentLoaded", () => {
       bannerState.currShiftY += (bannerState.targetShiftY - bannerState.currShiftY) * 0.08;
 
       const scrollTop = window.scrollY || document.documentElement.scrollTop;
-      const scrollScale = Math.max(0.84, 1 - scrollTop / 3200);
-      const scrollOpacity = Math.max(0.08, 0.36 - scrollTop / 2400);
+      const scrollScale = Math.max(0.86, 1 - scrollTop / 3200);
+      const scrollOpacity = Math.max(0.1, 0.44 - scrollTop / 2400);
 
       bannerCard.style.opacity = scrollOpacity.toFixed(3);
       bannerCard.style.transform = `translate3d(${bannerState.currShiftX.toFixed(2)}px, ${bannerState.currShiftY.toFixed(2)}px, 0px) rotateX(${bannerState.currRotX.toFixed(2)}deg) rotateY(${bannerState.currRotY.toFixed(2)}deg) scale(${scrollScale.toFixed(3)})`;
