@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Innovexa Studio | Digital Solutions & Discord Engineering</title>
+  <link rel="icon" type="image/png" href="/logo.png">
   <link rel="stylesheet" href="style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -23,6 +24,48 @@
       box-shadow: 0 6px 26px rgba(56, 189, 248, 0.3);
       transform: translateY(-2px);
     }
+
+    /* 3D Interactive Animated Video Banner Backdrop */
+    .hero-3d-banner-stage {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      z-index: 0;
+      perspective: 1100px;
+      overflow: hidden;
+    }
+
+    .hero-3d-banner-card {
+      width: min(780px, 94vw);
+      transform-style: preserve-3d;
+      will-change: transform, opacity;
+      opacity: 0.36;
+      filter: drop-shadow(0 0 45px rgba(56, 189, 248, 0.28));
+    }
+
+    .hero-3d-banner-card video {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 28px;
+      /* Blends the dark video edges cleanly into your site's background */
+      mix-blend-mode: lighten;
+      -webkit-mask-image: radial-gradient(ellipse 68% 64% at 50% 50%, #000 52%, transparent 96%);
+      mask-image: radial-gradient(ellipse 68% 64% at 50% 50%, #000 52%, transparent 96%);
+    }
+
+    /* Keep floating cubes & page sections cleanly layered above the 3D banner */
+    #bg-canvas {
+      z-index: 1;
+    }
+
+    main, nav, footer {
+      position: relative;
+      z-index: 2;
+    }
   </style>
 </head>
 <body>
@@ -31,7 +74,7 @@
     <div class="loader-content">
       <div class="loader-ring"></div>
       <div class="loader-brand">
-        <span class="brand-dot"></span>Innovexa Studio
+        <img src="/logo.png" alt="" style="width: 24px; height: 24px; border-radius: 50%; object-fit: cover; margin-right: 8px; vertical-align: middle;">Innovexa Studio
       </div>
       <div class="loader-bar-wrap">
         <div class="loader-bar-fill"></div>
@@ -41,6 +84,13 @@
 
   <!-- Cursor Glow Light (Follows Mouse) -->
   <div id="cursor-glow"></div>
+
+  <!-- 3D Mouse-Interactive Animated Banner Background -->
+  <div class="hero-3d-banner-stage" aria-hidden="true">
+    <div class="hero-3d-banner-card" id="hero-3d-banner">
+      <video src="/banner.mp4" autoplay loop muted playsinline preload="auto"></video>
+    </div>
+  </div>
   
   <canvas id="bg-canvas"></canvas>
   <div class="ambient-glow"></div>
